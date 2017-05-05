@@ -1,0 +1,2001 @@
+% Copyright 2008 by Marc de Falco
+%
+% This file may be distributed and/or modified
+%
+% 1. under the LaTeX Project Public License and/or
+% 2. under the GNU Public License.
+%
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{tikz-multinets}[2017/05/01 v0.1 Tikz Interaction Multinets library, by Sallaccio]
+% Modifications from v0.1 tikz interaction nets library by Marc de Falco:
+% - apex angle of simple cells (from 60 to 100)
+% - added multiport cells and 1-port cells
+% - added multiwires
+% - added empty node with anchors above and above above for better building of wires
+% - added external auxiliary and principal ports to bypass cells
+% - added commands for : cellheight, size of principal port in multicells, port size, free wire size, bypass 
+%		distance
+\RequirePackage{tikz}
+\RequirePackage{ifthen}
+% \RequirePackage{xstring}
+
+% We need this to load the \emph{isosceles triangle} shape and \emph{trapezium} shape
+\usetikzlibrary{shapes.geometric}
+\usetikzlibrary{decorations.pathreplacing}
+\usetikzlibrary{decorations.markings}
+\usetikzlibrary{shadows}
+\usetikzlibrary{positioning}
+\usetikzlibrary{matrix}
+\usetikzlibrary{fit}
+\usetikzlibrary{calc}
+
+% \usepackage{pgfmath}
+
+\newif\ifshownodes
+
+% Package option for linear logic
+\newif\iflinlogic
+\linlogicfalse
+
+\DeclareOption{linlogic}{\linlogictrue}
+\ProcessOptions\relax
+
+\pgfkeys{
+	/pgf/.cd,
+    arity/.initial=4,
+    coarity/.initial=2,
+    precise/.is if=precisewires,
+    show nodes/.is if=shownodes,
+%     direction/.initial=west,
+%     direction/.store in=\direct,
+}
+
+%%%%%%%% CONSTANTS %%%%%%%%%
+\newcommand{\inetportsize}{.6cm}         	% sets the 'length' of each principal port in a multicell
+\newcommand{\inetcellheight}{.8cm}       	% sets the (minimal) height of cells
+\newcommand{\abovedistance}{.15cm}       	% sets the distance between a port and its 'above' coordinate
+\newcommand{\aboveabovedistance}{.5cm}   	% sets the distance between a port and its 'above above' coordinate
+\newcommand{\bypassdistance}{.3cm}       	% sets the distance of the exterior principal and auxiliary ports
+\newcommand{\inetwirefreelength}{.3cm}   	% sets the length of free wires
+\newcommand{\inetportnamedistance}{6pt}	 	% sets the distance of the name of a port from its representation
+
+\newcommand{\inetsetportlength}[1]{
+	\renewcommand{\abovedistance}{#1}
+	\renewcommand{\aboveabovedistance}{(#1+.35cm)}
+}
+\newcommand{\inetsetportsize}[1]{\renewcommand{\inetportsize}{#1}}
+\newcommand{\inetsetcellheight}[1]{\renewcommand{\inetcellheight}{#1}}
+\newcommand{\inetsetabovedistance}[1]{\renewcommand{\abovedistance}{#1}}
+\newcommand{\inetsetaboveabovedistance}[1]{\renewcommand{\aboveabovedistance}{#1}}
+\newcommand{\inetsetbypassdistance}[1]{\renewcommand{\bypassdistance}{#1}}
+\newcommand{\inetsetwirefreelength}[1]{\renewcommand{\inetwirefreelength}{#1}}
+\newcommand{\inetsetportnamedistance}[1]{\renewcommand{\inetportnamedistance}{#1}}
+
+\def\signfornodes{\Large +}					% sets the respresentation of hidden nodes if 'show nodes' option is on
+
+\def\inetwirelayer{wire layer}
+\newcommand{\inetwiresunder}{\def\inetwirelayer{below layer}}
+
+%%%%%%%% DECLARATION OF USABLE COMMANDS %%%%%%%%%
+% \inetfancy									% use fancy style
+% \inetnofancy									% do not use fancy style
+% \inetsetfancycellstyle}[1]					% set fancy style for all kinds of cells
+% \inetsetfancywirestyle}[1]					% set fancy style for wires
+% \inetsetfancyfreewirestyle}[1]				% set fancy style for free wires
+% \inetsetfancyportstyle}[1]					% set fancy style for ports
+% \inetsetfancyboxstyle}[1]						% set fancy style for boxes
+
+\newcommand{\inetcell}{\INETcell}					% create a cell with one principal port (triangle)
+\newcommand{\inetmulticell}{\INETmulticell}			% create a cell with multiple principal ports (trapezium)
+\newcommand{\inetzerocell}{\INETzerocell}			% create a cell with zero auxiliary ports (circle)
+
+\newcommand{\inetport}{\INETport}					% create a port on a cell
+\newcommand{\inetportnamed}{\INETportnamed}
+\newcommand{\inetwirefree}{\INETwirefree}				% create a free wire from a port of a cell
+
+\newcommand{\inetwirecoords}{\INETwirecoords}			% create a wire between two positions
+\newcommand{\inetwire}{\INETsmoothwire}					% create a wire between two ports
+\newcommand{\inetprecisewire}{\INETprecisewire}			% create a precise wire between two ports through nodes
+\newcommand{\inetsmoothwire}{\INETsmoothwire}			% create a simple wire between two ports through nodes
+\newcommand{\inetshortwire}{\INETshortwire}				% create a short wire between two ports
+\newcommand{\inetveryshortwire}{\INETveryshortwire}		% create a very short wire between two ports
+
+\newcommand{\inetmultiwire}{\INETmultiwire}				% create a multiwire (precise or simple depending on \inetwire)
+
+\newcommand{\inetwirearoundleft}{\INETwirearoundleft}		% create a wire around a cell on its left
+\newcommand{\inetwirearoundright}{\INETwirearoundright}		% create a wire around a cell on its right
+
+\newcommand{\inetnode}{\INETnode}						% create a node for wires to go through
+\newcommand{\inetloop}{\INETloop}						% create a loop wire
+
+\newcommand{\inetbox}{\INETbox}							% create a box
+\newcommand{\inetprombox}{\INETprombox}					% create a linear logic promotion box
+
+\newcommand{\inetdotsabove}{\INETdotsabove}				% dots above a port
+\newcommand{\inetbrace}{\INETbrace}						% braces imbracing ports of some cells
+\newcommand{\inetdotsbetween}{\INETdotsbetween}			% dots between two positions
+\newcommand{\nodebetween}{\INETnodebetween}				% node in the middle of two positions
+
+\newcommand{\inetmulticelltype}{\INETmulticelltype}		% declare a multicell of some type: label, coarity, arity
+\newcommand{\inetmulticellshape}{\INETmulticellshape}	% declare a multicell of some shape: coarity, arity
+
+\newcommand{\inetprecisewires}{\renewcommand{\inetwire}{\INETprecisewire}}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%   SHAPES AND PORTS OF MULTICELLS, CELLS, ZEROCELLS, NODES   %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% DEFINITION OF SHAPE AND PORTS OF A MULTICELL
+\pgfdeclareshape{multicellule}{
+    \savedmacro\arity{%        
+        \pgfmathtruncatemacro\arity{\pgfkeysvalueof{/pgf/arity}}%
+    }
+    \savedmacro\coarity{%        
+        \pgfmathtruncatemacro\coarity{\pgfkeysvalueof{/pgf/coarity}}%
+    }
+
+    \inheritsavedanchors[from=trapezium]
+    \inheritanchorborder[from=trapezium]
+    \inheritanchor[from=trapezium]{center}
+    \inheritanchor[from=trapezium]{south}
+    \inheritanchor[from=trapezium]{west}
+    \inheritanchor[from=trapezium]{east}
+    \inheritanchor[from=trapezium]{north}
+    \inheritanchor[from=trapezium]{bottom left corner}
+    \inheritanchor[from=trapezium]{bottom right corner}
+    \inheritanchor[from=trapezium]{top left corner}
+    \inheritanchor[from=trapezium]{top right corner}
+    \inheritanchor[from=trapezium]{top side}
+    \inheritanchor[from=trapezium]{bottom side}
+   
+	% Definition of pax in case arity = 1 (for compatibility with simple cells)
+	\anchor{pax}{
+		\installtrapeziumparameters
+			\pgfpointlineattime{0.5}{\lowerleftpoint}{\lowerrightpoint}
+    }
+    \anchor{above pax}{
+		\installtrapeziumparameters
+		\pgfmathrotatepointaround{
+			\pgfpointadd{\pgfpoint{0ex}{-\abovedistance}}
+				{\pgfpointlineattime{0.5}{\lowerleftpoint}{\lowerrightpoint}}
+		}{
+			\pgfpointlineattime{0.5}{\lowerleftpoint}{\lowerrightpoint}
+		}{	\rotate  }
+	}
+	\anchor{above above pax}{
+		\installtrapeziumparameters
+		\pgfmathrotatepointaround{
+			\pgfpointadd{\pgfpoint{0ex}{-\aboveabovedistance}}
+				{\pgfpointlineattime{0.5}{\lowerleftpoint}{\lowerrightpoint}}
+		}{
+			\pgfpointlineattime{0.5}{\lowerleftpoint}{\lowerrightpoint}
+		}{	\rotate  }
+    }
+
+	% Definition of simili auxiliary port outside of the cell on its left side
+	% 	in order to help build wires around cells
+	\anchor{leftext pax}{
+		\installtrapeziumparameters
+		\pgfpointlineatdistance{-\bypassdistance}{\lowerleftpoint}{\lowerrightpoint}
+    }
+    \anchor{above leftext pax}{
+		\installtrapeziumparameters
+		\pgfmathrotatepointaround{
+			\pgfpointadd{
+				\pgfpointlineatdistance{-\bypassdistance}{\lowerleftpoint}{\lowerrightpoint}
+			}{\pgfpoint{0ex}{-\abovedistance}}
+		}{
+			\pgfpointlineatdistance{-\bypassdistance}{\lowerleftpoint}{\lowerrightpoint}
+		}{\rotate}
+    }
+    \anchor{above above leftext pax}{
+		\installtrapeziumparameters
+		\pgfmathrotatepointaround{
+			\pgfpointadd{
+				\pgfpointlineatdistance{-\bypassdistance}{\lowerleftpoint}{\lowerrightpoint}
+			}{\pgfpoint{0ex}{-\aboveabovedistance}}
+		}{
+			\pgfpointlineatdistance{-\bypassdistance}{\lowerleftpoint}{\lowerrightpoint}
+		}{\rotate}
+    }
+	% Definition of simili auxiliary port outside of the cell on its right side
+	% 	in order to help build wires around cells
+	\anchor{rightext pax}{
+		\installtrapeziumparameters
+		\pgfpointlineatdistance{-\bypassdistance}{\lowerrightpoint}{\lowerleftpoint}
+    }
+    \anchor{above rightext pax}{
+		\installtrapeziumparameters
+		\pgfmathrotatepointaround{
+			\pgfpointadd{
+				\pgfpointlineatdistance{-\bypassdistance}{\lowerrightpoint}{\lowerleftpoint}
+			}{\pgfpoint{0ex}{-\abovedistance}}
+		}{
+			\pgfpointlineatdistance{-\bypassdistance}{\lowerrightpoint}{\lowerleftpoint}
+		}{\rotate}
+    }
+    \anchor{above above rightext pax}{
+		\installtrapeziumparameters
+		\pgfmathrotatepointaround{
+			\pgfpointadd{
+				\pgfpointlineatdistance{-\bypassdistance}{\lowerrightpoint}{\lowerleftpoint}
+			}{\pgfpoint{0ex}{-\aboveabovedistance}}
+		}{
+			\pgfpointlineatdistance{-\bypassdistance}{\lowerrightpoint}{\lowerleftpoint}
+		}{\rotate}
+    }
+    % Definition of a port aligned with the principal port outside of the cell on its left side
+	% 	in order to help build wires around cells
+    \anchor{leftext pal}{
+		\installtrapeziumparameters
+		\pgfmathrotatepointaround{%
+			\csname pgf@anchor@multicellule@rightext pax\endcsname%
+		}{\centerpoint}{180}%
+    }
+    \anchor{above leftext pal}{
+		\installtrapeziumparameters
+		\pgfmathrotatepointaround{%
+			\csname pgf@anchor@multicellule@above rightext pax\endcsname%
+		}{\centerpoint}{180}%
+    }
+    \anchor{above above leftext pal}{
+		\installtrapeziumparameters
+		\pgfmathrotatepointaround{%
+			\csname pgf@anchor@multicellule@above above rightext pax\endcsname%
+		}{\centerpoint}{180}%
+    }
+    % Definition of a port aligned with the principal port outside of the cell on its right side
+	% 	in order to help build wires around cells
+	\anchor{rightext pal}{
+		\installtrapeziumparameters
+		\pgfmathrotatepointaround{%
+			\csname pgf@anchor@multicellule@leftext pax\endcsname%
+		}{\centerpoint}{180}%
+    }
+    \anchor{above rightext pal}{
+		\installtrapeziumparameters
+		\pgfmathrotatepointaround{%
+			\csname pgf@anchor@multicellule@above leftext pax\endcsname%
+		}{\centerpoint}{180}%
+    }
+    \anchor{above above rightext pal}{
+		\installtrapeziumparameters
+		\pgfmathrotatepointaround{%
+			\csname pgf@anchor@multicellule@above above leftext pax\endcsname%
+		}{\centerpoint}{180}%
+    }
+	% Definition of an anchor outside of the cell on its west and east sides
+	% 	in order to help build wires around cells
+    \anchor{westwest}{
+		\installtrapeziumparameters
+		\pgfpointadd{\pgf@anchor@multicellule@west}{\pgfpoint{-\bypassdistance}{0ex}}
+    }
+    \anchor{easteast}{
+		\installtrapeziumparameters
+		\pgfpointadd{\pgf@anchor@multicellule@east}{\pgfpoint{\bypassdistance}{0ex}}
+    }
+% 
+
+    % Definition of 'pax k' (k-th auxiliary port) [no default];
+    \expandafter\pgfutil@g@addto@macro\csname pgf@sh@s@multicellule\endcsname{%
+		\c@pgf@counta\arity\relax%
+		\pgfmathloop%
+			\ifnum\c@pgf@counta>0\relax%
+				\pgfutil@ifundefined{pgf@anchor@multicellule@pax\space\the\c@pgf@counta}{%
+                % I HATE TeX
+				\expandafter\xdef\csname pgf@anchor@multicellule@pax\space\the\c@pgf@counta\endcsname{% 
+                \noexpand\pgfmathadd@{\noexpand\arity}{1}%
+                \noexpand\c@pgf@countb=\noexpand\pgfmathresult%
+                \noexpand\pgfmathdivide@{\the\c@pgf@counta}%
+                    {\noexpand\the\c@pgf@countb}%
+                \noexpand\let\noexpand\time\noexpand\pgfmathresult%
+                \noexpand\installtrapeziumparameters%
+                    \noexpand\pgfpointlineattime%
+                    {\noexpand\time}%
+                    {\noexpand\lowerleftpoint}%
+                    {\noexpand\lowerrightpoint}%
+                }%
+                \expandafter\xdef\csname pgf@anchor@multicellule@above pax\space\the\c@pgf@counta\endcsname{%
+                \noexpand\pgfmathadd@{\noexpand\arity}{1}%
+                \noexpand\c@pgf@countb=\noexpand\pgfmathresult%
+                \noexpand\pgfmathdivide@{\the\c@pgf@counta}%
+                    {\noexpand\the\c@pgf@countb}%
+                \noexpand\let\noexpand\time\noexpand\pgfmathresult%
+                \noexpand\installtrapeziumparameters
+                \noexpand\pgfmathrotatepointaround{%
+					\noexpand\pgfpointadd{
+						\noexpand\pgfpoint{0cm}{-\noexpand\abovedistance}
+					}{%
+						\noexpand\pgfpointlineattime%
+                                        {\noexpand\time}%
+                                        {\noexpand\lowerleftpoint}%
+                                        {\noexpand\lowerrightpoint}%
+					}%
+				}{\noexpand\pgfpointlineattime%
+                                        {\noexpand\time}%
+                                        {\noexpand\lowerleftpoint}%
+                                        {\noexpand\lowerrightpoint}
+				}{\noexpand\rotate}%
+                }%
+                \expandafter\xdef\csname pgf@anchor@multicellule@above above pax\space\the\c@pgf@counta\endcsname{%
+                \noexpand\pgfmathadd@{\noexpand\arity}{1}%
+                \noexpand\c@pgf@countb=\noexpand\pgfmathresult%
+                \noexpand\pgfmathdivide@{\the\c@pgf@counta}%
+                    {\noexpand\the\c@pgf@countb}%
+                \noexpand\let\noexpand\time\noexpand\pgfmathresult%
+                \noexpand\installtrapeziumparameters
+                \noexpand\pgfmathrotatepointaround{%
+					\noexpand\pgfpointadd{
+						\noexpand\pgfpoint{0cm}{-\noexpand\aboveabovedistance}
+					}{%
+						\noexpand\pgfpointlineattime%
+                                        {\noexpand\time}%
+                                        {\noexpand\lowerleftpoint}%
+                                        {\noexpand\lowerrightpoint}%
+					}%
+				}{\noexpand\pgfpointlineattime%
+                                        {\noexpand\time}%
+                                        {\noexpand\lowerleftpoint}%
+                                        {\noexpand\lowerrightpoint}
+				}{\noexpand\rotate}%
+                }%
+			}{\c@pgf@counta0\relax}% 
+			\advance\c@pgf@counta-1\relax%
+		\repeatpgfmathloop%	
+	}%
+	% Definition of 'pal k' (k-th principal port) [no default];
+	\expandafter\pgfutil@g@addto@macro\csname pgf@sh@s@multicellule\endcsname{%
+		\c@pgf@counta\coarity\relax%
+		\pgfmathloop%
+			\ifnum\c@pgf@counta>0\relax%
+				\pgfutil@ifundefined{pgf@anchor@multicellule@pal\space\the\c@pgf@counta}{%
+                % I HATE TeX
+				\expandafter\xdef\csname pgf@anchor@multicellule@pal\space\the\c@pgf@counta\endcsname{% 
+				\noexpand\pgfmathmultiply@{\noexpand\coarity}{2}%
+				\noexpand\c@pgf@countb=\noexpand\pgfmathresult%
+				\noexpand\pgfmathmultiply@{\the\c@pgf@counta}{2}%
+				\noexpand\pgfmathadd@{\noexpand\pgfmathresult}{-1}%
+				\noexpand\pgfmathdivide@{\noexpand\pgfmathresult}%
+					{\noexpand\the\c@pgf@countb}%
+				\noexpand\let\noexpand\time\noexpand\pgfmathresult%
+				\noexpand\installtrapeziumparameters%
+					\noexpand\pgfpointlineattime%
+					{\noexpand\time}%
+					{\noexpand\upperrightpoint}%
+					{\noexpand\upperleftpoint}%
+				}%
+                \expandafter\xdef\csname pgf@anchor@multicellule@above pal\space\the\c@pgf@counta\endcsname{%
+				\noexpand\pgfmathmultiply@{\noexpand\coarity}{2}%
+				\noexpand\c@pgf@countb=\noexpand\pgfmathresult%
+				\noexpand\pgfmathmultiply@{\the\c@pgf@counta}{2}%
+				\noexpand\pgfmathadd@{\noexpand\pgfmathresult}{-1}%
+				\noexpand\pgfmathdivide@{\noexpand\pgfmathresult}%
+					{\noexpand\the\c@pgf@countb}%
+				\noexpand\let\noexpand\time\noexpand\pgfmathresult%
+				\noexpand\installtrapeziumparameters
+				\noexpand\pgfmathrotatepointaround{%
+					\noexpand\pgfpointadd{
+						\noexpand\pgfpoint{0cm}{\noexpand\abovedistance}
+					}{%
+						\noexpand\pgfpointlineattime%
+                                        {\noexpand\time}%
+                                        {\noexpand\upperrightpoint}%
+                                        {\noexpand\upperleftpoint}%
+					}%
+				}{\noexpand\pgfpointlineattime%
+                                        {\noexpand\time}%
+                                        {\noexpand\upperrightpoint}%
+                                        {\noexpand\upperleftpoint}
+				}{\noexpand\rotate}%
+                }%
+                \expandafter\xdef\csname pgf@anchor@multicellule@above above pal\space\the\c@pgf@counta\endcsname{%
+				\noexpand\pgfmathmultiply@{\noexpand\coarity}{2}%
+				\noexpand\c@pgf@countb=\noexpand\pgfmathresult%
+				\noexpand\pgfmathmultiply@{\the\c@pgf@counta}{2}%
+				\noexpand\pgfmathadd@{\noexpand\pgfmathresult}{-1}%
+				\noexpand\pgfmathdivide@{\noexpand\pgfmathresult}%
+					{\noexpand\the\c@pgf@countb}%
+                \noexpand\let\noexpand\time\noexpand\pgfmathresult%
+                \noexpand\installtrapeziumparameters
+                \noexpand\pgfmathrotatepointaround{%
+					\noexpand\pgfpointadd{
+						\noexpand\pgfpoint{0cm}{\noexpand\aboveabovedistance}
+					}{%
+						\noexpand\pgfpointlineattime%
+                                        {\noexpand\time}%
+                                        {\noexpand\upperrightpoint}%
+                                        {\noexpand\upperleftpoint}%
+					}%
+				}{\noexpand\pgfpointlineattime%
+                                        {\noexpand\time}%
+                                        {\noexpand\upperrightpoint}%
+                                        {\noexpand\upperleftpoint}
+				}{\noexpand\rotate}%
+                }%
+      }{\c@pgf@counta0\relax}% 
+			\advance\c@pgf@counta-1\relax%
+		\repeatpgfmathloop%	
+      }
+      
+      
+	% Definition of the form of the multicell: a trapezium with rounded corners on the longest side
+	\backgroundpath{
+		\installtrapeziumparameters{
+% 			\pgftransformshift{\basepoint}
+%			\pgftransformrotate{\rotate}
+			\pgfpathmoveto{\upperleftpoint}
+			\pgfpathlineto{
+			\pgfpointlineattime{0.8}{\upperleftpoint}{\lowerleftpoint}
+			}
+			\pgfpathcurveto{
+				\pgfpointlineattime{0.8}{\upperleftpoint}{\lowerleftpoint}
+			}{
+				\lowerleftpoint
+			}{
+				\pgfpointlineattime{0.1}{\lowerleftpoint}{\lowerrightpoint}
+			}
+			\pgfpathlineto{
+				\pgfpointlineattime{0.9}{\lowerleftpoint}{\lowerrightpoint}
+			}
+			\pgfpathcurveto{
+				\pgfpointlineattime{0.9}{\lowerleftpoint}{\lowerrightpoint}
+			}{
+				\lowerrightpoint
+			}{
+				\pgfpointlineattime{0.2}{\lowerrightpoint}{\upperrightpoint}
+			}
+			\pgfpathlineto{
+				\pgfpointlineattime{0.3}{\lowerrightpoint}{\upperrightpoint}
+			}
+			\pgfpathlineto{
+				\upperrightpoint
+			}
+			\pgfpathclose
+			}
+    }
+
+}
+
+
+% DEFINITION OF SHAPE AND PORTS OF A SIMPLE CELL
+\pgfdeclareshape{cellule}{
+    \savedmacro\arity{%        
+        \pgfmathtruncatemacro\arity{\pgfkeysvalueof{/pgf/arity}}%
+    }
+
+    \inheritsavedanchors[from=isosceles triangle]
+    \inheritanchorborder[from=isosceles triangle]
+    \inheritanchor[from=isosceles triangle]{center}
+    \inheritanchor[from=isosceles triangle]{left corner}
+    \inheritanchor[from=isosceles triangle]{right corner}
+    \inheritanchor[from=isosceles triangle]{south}
+    \inheritanchor[from=isosceles triangle]{west}
+    \inheritanchor[from=isosceles triangle]{north east}
+    \inheritanchor[from=isosceles triangle]{north west}
+    \inheritanchor[from=isosceles triangle]{south east}
+    \inheritanchor[from=isosceles triangle]{south west}
+    \inheritanchor[from=isosceles triangle]{east}
+    \inheritanchor[from=isosceles triangle]{north}
+    \inheritanchor[from=isosceles triangle]{lower left}
+    \inheritanchor[from=isosceles triangle]{apex}
+   
+	% Definition of pax in case arity = 1
+	\anchor{pax}{
+		\trianglepoints
+		\pgfmathrotatepointaround{
+			\pgfpointadd{
+					\pgfpointlineattime{0.5}
+					{\lowerleftanchor}
+					{\lowerrightanchor}
+			}{\centerpoint}
+		}
+        {\centerpoint}{\rotate}
+    }
+    \anchor{above pax}{
+        \trianglepoints
+        \pgfmathrotatepointaround{
+            \pgfpointadd{
+                \pgfpointadd{\pgfpoint{-\abovedistance}{0cm}}{
+                    \pgfpointlineattime{0.5}
+                        {\lowerleftanchor}
+                        {\lowerrightanchor}
+                    }
+                }
+                {\centerpoint}
+            }{\centerpoint}{\rotate}
+        }
+	\anchor{above above pax}{
+        \trianglepoints
+        \pgfmathrotatepointaround{
+            \pgfpointadd{
+                \pgfpointadd{\pgfpoint{-\aboveabovedistance}{0cm}}{
+                    \pgfpointlineattime{0.5}{\lowerleftanchor}{\lowerrightanchor}
+                }
+            }
+            {\centerpoint}
+        }
+        {\centerpoint}{\rotate}
+    }
+	% Definition of middle pax (ususally used if arity = 3; in fact, equal to just 'pax')
+	\anchor{middle pax}{
+		\trianglepoints
+		\pgfmathrotatepointaround{
+			\pgfpointadd{
+				\pgfpointlineattime{0.5}{\lowerleftanchor}{\lowerrightanchor}
+			}{\centerpoint}
+		}
+        {\centerpoint}{\rotate}
+    }
+    \anchor{above middle pax}{
+        \trianglepoints
+        \pgfmathrotatepointaround{
+            \pgfpointadd{
+                \pgfpointadd{\pgfpoint{-\abovedistance}{0cm}}{
+                    \pgfpointlineattime{0.5}
+                        {\lowerleftanchor}{\lowerrightanchor}
+                }
+            }
+            {\centerpoint}
+        }{\centerpoint}{\rotate}
+	}
+	\anchor{above above middle pax}{
+        \trianglepoints
+        \pgfmathrotatepointaround{
+            \pgfpointadd{
+                \pgfpointadd{\pgfpoint{-\aboveabovedistance}{0cm}
+            }{
+                 \pgfpointlineattime{0.5}{\lowerleftanchor}{\lowerrightanchor}
+             }
+            }
+            {\centerpoint}
+        }{\centerpoint}{\rotate}
+	}
+	% Definition of left pax (usually used if arity = 2 or 3, but always defined)
+	\anchor{left pax}{
+		\trianglepoints
+        \pgfmathrotatepointaround{
+			\pgfpointadd{
+				\pgfpointlineattime{0.25}{\lowerleftanchor}{\lowerrightanchor}
+			}{\centerpoint}
+		}
+		{\centerpoint}{\rotate}
+	}
+	\anchor{above left pax}{
+		\trianglepoints
+		\pgfmathrotatepointaround{
+			\pgfpointadd{
+				\pgfpointadd{
+					\pgfpoint{-\abovedistance}{0cm}
+				}{
+					\pgfpointlineattime{0.25}{\lowerleftanchor}{\lowerrightanchor}
+				 }
+			}
+			{\centerpoint}
+		}{\centerpoint}{\rotate}
+    }
+	\anchor{above above left pax}{
+		\trianglepoints
+		\pgfmathrotatepointaround{
+			\pgfpointadd{
+				\pgfpointadd{
+					\pgfpoint{-\aboveabovedistance}{0cm}
+				}{
+					\pgfpointlineattime{0.25}{\lowerleftanchor}{\lowerrightanchor}
+				 }
+			}
+			{\centerpoint}
+		}{\centerpoint}{\rotate}
+    }
+	% Definition of right pax (usually used if arity = 2 or 3, but always defined)
+	\anchor{right pax}{
+		\trianglepoints
+		\pgfmathrotatepointaround{
+			\pgfpointadd{
+				\pgfpointlineattime{0.75}{\lowerleftanchor}{\lowerrightanchor}
+			}
+			{\centerpoint}
+		}
+		{\centerpoint}{\rotate}
+    }
+	\anchor{above right pax}{
+		\trianglepoints
+		\pgfmathrotatepointaround{
+			\pgfpointadd{
+				\pgfpointadd{\pgfpoint{-\abovedistance}{0cm}}
+				{
+					\pgfpointlineattime{0.75}{\lowerleftanchor}{\lowerrightanchor}
+				}
+			}
+			{\centerpoint}
+		}{\centerpoint}{\rotate}
+    }
+    \anchor{above above right pax}{
+		\trianglepoints
+		\pgfmathrotatepointaround{
+			\pgfpointadd{
+				\pgfpointadd{\pgfpoint{-\aboveabovedistance}{0cm}}
+				{
+					\pgfpointlineattime{0.75}{\lowerleftanchor}{\lowerrightanchor}
+				}
+			}
+			{\centerpoint}
+		}{\centerpoint}{\rotate}
+    }
+	% Definition of principal port
+	\anchor{pal}{
+		\trianglepoints
+		\pgfpointadd{\centerpoint}{
+			\pgfmathrotatepointaround{
+				\pgfpointadd{\pgfpoint{-0.07cm}{0cm}}{\apexanchor}
+% 				\apexanchor
+			}{\pgfpointorigin}{\rotate}
+		}
+    }
+    \anchor{above pal}{
+		\trianglepoints
+		\pgfpointadd{\centerpoint}{
+			\pgfmathrotatepointaround{
+				\pgfpointadd{\pgfpoint{\abovedistance-0.07cm}{0cm}}{\apexanchor}
+			}
+			{\pgfpointorigin}{\rotate}
+		}
+    }
+    \anchor{above above pal}{
+		\trianglepoints
+		\pgfpointadd{\centerpoint}{
+			\pgfmathrotatepointaround{
+				\pgfpointadd{\pgfpoint{\aboveabovedistance-0.07cm}{0cm}}{\apexanchor}
+			}
+			{\pgfpointorigin}{\rotate}
+		}
+    }
+    \anchor{pal 1}{
+		\trianglepoints
+		\pgfpointadd{\centerpoint}{
+			\pgfmathrotatepointaround{
+				\pgfpointadd{\pgfpoint{-0.07cm}{0cm}}{\apexanchor}
+			}{\pgfpointorigin}{\rotate}
+		}
+    }
+	% Definition of principal port as first port of a multicell for consistency
+    \anchor{above pal 1}{
+		\trianglepoints
+		\pgfpointadd{\centerpoint}{
+			\pgfmathrotatepointaround{
+				\pgfpointadd{\pgfpoint{\abovedistance}{0cm}}{\apexanchor}
+			}
+			{\pgfpointorigin}{\rotate}
+		}
+    }
+    \anchor{above above pal 1}{
+		\trianglepoints
+		\pgfpointadd{\centerpoint}{
+			\pgfmathrotatepointaround{
+				\pgfpointadd{\pgfpoint{\aboveabovedistance}{0cm}}{\apexanchor}
+			}
+			{\pgfpointorigin}{\rotate}
+		}
+    }
+    % Definition of simili auxiliary port outside of the cell on its left side
+	% 	in order to help build wires around cells
+	\anchor{leftext pax}{
+		\trianglepoints
+		\pgfmathrotatepointaround{%
+			\pgfpointadd{%
+				\pgfpointlineatdistance%
+                    {-\bypassdistance}{\lowerleftanchor}{\lowerrightanchor}%
+                  }{\centerpoint}%
+                  }{\centerpoint}{\rotate}%
+    }
+    \anchor{above leftext pax}{
+		\trianglepoints
+		\pgfmathrotatepointaround{%
+			\pgfpointadd{%
+				\pgfpointadd{
+					\pgfpoint{-\abovedistance}{0cm}}{%
+						\pgfpointlineatdistance%
+							{-\bypassdistance}{\lowerleftanchor}{\lowerrightanchor}%
+					}%
+			}{\centerpoint}%
+		}%
+		{\centerpoint}%
+		{\rotate}%
+    }
+    \anchor{above above leftext pax}{
+		\trianglepoints
+		\pgfmathrotatepointaround{%
+			\pgfpointadd{%
+				\pgfpointadd{
+					\pgfpoint{-\aboveabovedistance}{0cm}}{%
+						\pgfpointlineatdistance{-\bypassdistance}{\lowerleftanchor}{\lowerrightanchor}%
+					}%
+			}{\centerpoint}%
+		}%
+        {\centerpoint}%
+        {\rotate}%
+    }
+    % Definition of simili auxiliary port outside of the cell on its right side
+	% 	in order to help build wires around cells
+	\anchor{rightext pax}{
+		\trianglepoints
+		\pgfmathrotatepointaround{%
+			\pgfpointadd{%
+				\pgfpointlineatdistance%
+                    {-\bypassdistance}{\lowerrightanchor}{\lowerleftanchor}%
+                  }{\centerpoint}%
+                  }{\centerpoint}{\rotate}%
+    }
+    \anchor{above rightext pax}{
+		\trianglepoints
+		\pgfmathrotatepointaround{%
+			\pgfpointadd{%
+				\pgfpointadd{
+					\pgfpoint{-\abovedistance}{0cm}}{%
+						\pgfpointlineatdistance%
+							{-\bypassdistance}{\lowerrightanchor}{\lowerleftanchor}%
+					}%
+			}{\centerpoint}%
+		}%
+		{\centerpoint}%
+		{\rotate}%
+    }
+    \anchor{above above rightext pax}{
+		\trianglepoints
+		\pgfmathrotatepointaround{%
+			\pgfpointadd{%
+				\pgfpointadd{
+					\pgfpoint{-\aboveabovedistance}{0cm}}{%
+						\pgfpointlineatdistance{-\bypassdistance}{\lowerrightanchor}{\lowerleftanchor}%
+					}%
+			}{\centerpoint}%
+		}%
+        {\centerpoint}%
+        {\rotate}%
+    }
+    % Definition of a port aligned with the principal port outside of the cell on its left side
+	% 	in order to help build wires around cells
+	\anchor{leftext pal}{
+		\trianglepoints
+		\pgfmathrotatepointaround{%
+			\csname pgf@anchor@cellule@rightext pax\endcsname%
+		}{\centerpoint}{180}%
+    }
+    \anchor{above leftext pal}{
+		\trianglepoints
+		\pgfmathrotatepointaround{%
+			\csname pgf@anchor@cellule@above rightext pax\endcsname%
+		}{\centerpoint}{180}%
+    }
+    \anchor{above above leftext pal}{
+		\trianglepoints
+		\pgfmathrotatepointaround{%
+			\csname pgf@anchor@cellule@above above rightext pax\endcsname%
+		}{\centerpoint}{180}%
+    }
+    % Definition of a port aligned with the principal port outside of the cell on its right side
+	% 	in order to help build wires around cells
+	\anchor{rightext pal}{
+		\trianglepoints
+		\pgfmathrotatepointaround{%
+			\csname pgf@anchor@cellule@leftext pax\endcsname%
+		}{\centerpoint}{180}%
+    }
+    \anchor{above rightext pal}{
+		\trianglepoints
+		\pgfmathrotatepointaround{%
+			\csname pgf@anchor@cellule@above leftext pax\endcsname%
+		}{\centerpoint}{180}%
+    }
+    \anchor{above above rightext pal}{
+		\trianglepoints
+		\pgfmathrotatepointaround{%
+			\csname pgf@anchor@cellule@above above leftext pax\endcsname%
+		}{\centerpoint}{180}%
+    }
+    
+    % Definition of 'pax k' when arity is specified (by default 4);
+    % In this way, the default cell can be used as :
+    % 	arity = 1  -->	'pax'  or 'middle pax'
+    % 	arity = 2  -->	'left/right pax'
+    %	arity = 3  --> 	'left/middle/right pax'
+    %	arity = 4  -->	'pax 1/2/3/4' and 'left/right'
+    \expandafter\pgfutil@g@addto@macro\csname pgf@sh@s@cellule\endcsname{%
+		\c@pgf@counta\arity\relax%
+		\pgfmathloop%
+			\ifnum\c@pgf@counta>0\relax%
+				\pgfutil@ifundefined{pgf@anchor@cellule@pax\space\the\c@pgf@counta}{%
+                % I HATE TeX
+				\expandafter\xdef\csname pgf@anchor@cellule@pax\space\the\c@pgf@counta\endcsname{% 
+                \noexpand\pgfmathadd@{\noexpand\arity}{-1}%
+                \noexpand\c@pgf@countb=\noexpand\pgfmathresult%
+                \noexpand\pgfmathadd@{\the\c@pgf@counta}{-1}%
+                \noexpand\pgfmathdivide@{\noexpand\pgfmathresult}%
+                    {\noexpand\the\c@pgf@countb}%
+                \noexpand\pgfmathmultiply@{\noexpand\pgfmathresult}{0.5}%
+                \noexpand\pgfmathadd@{\noexpand\pgfmathresult}{0.25}%
+                \noexpand\let\noexpand\time\noexpand\pgfmathresult%
+                \noexpand\trianglepoints%
+                  \noexpand\pgfmathrotatepointaround{%
+                  \noexpand\pgfpointadd{%
+                    \noexpand\pgfpointlineattime%
+                    {\noexpand\time}%
+                    {\noexpand\lowerleftanchor}%
+                    {\noexpand\lowerrightanchor}%
+                  }{\noexpand\centerpoint}%
+                  }{\noexpand\centerpoint}{\noexpand\rotate}%
+                }%
+                \expandafter\xdef\csname pgf@anchor@cellule@above pax\space\the\c@pgf@counta\endcsname{%
+                \noexpand\pgfmathadd@{\noexpand\arity}{-1}%
+                \noexpand\c@pgf@countb=\noexpand\pgfmathresult%
+                \noexpand\pgfmathadd@{\the\c@pgf@counta}{-1}%
+                \noexpand\pgfmathdivide@{\noexpand\pgfmathresult}%
+                    {\noexpand\the\c@pgf@countb}%
+                \noexpand\pgfmathmultiply@{\noexpand\pgfmathresult}{0.5}%
+                \noexpand\pgfmathadd@{\noexpand\pgfmathresult}{0.25}%
+                \noexpand\let\noexpand\time\noexpand\pgfmathresult%
+                \noexpand\trianglepoints
+                  \noexpand\pgfmathrotatepointaround{%
+                      \noexpand\pgfpointadd{%
+                            \noexpand\pgfpointadd{
+                                \noexpand\pgfpoint{-\noexpand\abovedistance}{0cm}}{%
+                                    \noexpand\pgfpointlineattime%
+                                        {\noexpand\time}%
+                                        {\noexpand\lowerleftanchor}%
+                                        {\noexpand\lowerrightanchor}%
+                                    }%
+                            }{\noexpand\centerpoint}%
+                    }%
+                    {\noexpand\centerpoint}%
+                    {\noexpand\rotate}%
+                }%
+                \expandafter\xdef\csname pgf@anchor@cellule@above above pax\space\the\c@pgf@counta\endcsname{%
+                \noexpand\pgfmathadd@{\noexpand\arity}{-1}%
+                \noexpand\c@pgf@countb=\noexpand\pgfmathresult%
+                \noexpand\pgfmathadd@{\the\c@pgf@counta}{-1}%
+                \noexpand\pgfmathdivide@{\noexpand\pgfmathresult}%
+                    {\noexpand\the\c@pgf@countb}%
+                \noexpand\pgfmathmultiply@{\noexpand\pgfmathresult}{0.5}%
+                \noexpand\pgfmathadd@{\noexpand\pgfmathresult}{0.25}%
+                \noexpand\let\noexpand\time\noexpand\pgfmathresult%
+                \noexpand\trianglepoints
+                  \noexpand\pgfmathrotatepointaround{%
+                      \noexpand\pgfpointadd{%
+                            \noexpand\pgfpointadd{
+                                \noexpand\pgfpoint{-\noexpand\aboveabovedistance}{0cm}}{%
+                                    \noexpand\pgfpointlineattime%
+                                        {\noexpand\time}%
+                                        {\noexpand\lowerleftanchor}%
+                                        {\noexpand\lowerrightanchor}%
+                                    }%
+                            }{\noexpand\centerpoint}%
+                    }%
+                    {\noexpand\centerpoint}%
+                    {\noexpand\rotate}%
+                }%
+			}{\c@pgf@counta0\relax}% 
+			\advance\c@pgf@counta-1\relax%
+		\repeatpgfmathloop%	
+	}%
+	
+	% Definition of the form of the simple cell: a isoceles triangle with rounded corners
+    \backgroundpath{
+        \trianglepoints{
+            \pgftransformshift{\centerpoint}
+            \pgftransformrotate{\rotate}
+            \pgfpathmoveto{\apex}
+            \pgfpathlineto{
+                \pgfpointlineattime{0.7}{\apex}{\lowerleft}
+            }
+            \pgfpathcurveto{
+                \pgfpointlineattime{0.9}{\apex}{\lowerleft}
+            }{
+                \pgfpointlineattime{0.1}{\lowerleft}{\lowerleft\pgf@y-\pgf@y}
+            }{
+				\pgfpointlineattime{0.2}{\lowerleft}{\lowerleft\pgf@y-\pgf@y}
+			}
+			\pgfpathlineto{
+				\pgfpointlineattime{0.8}{\lowerleft}{\lowerleft\pgf@y-\pgf@y}
+			}
+			\pgfpathcurveto{
+				\pgfpointlineattime{0.9}{\lowerleft}{\lowerleft\pgf@y-\pgf@y}
+			}{
+				\pgfpointlineattime{0.1}{\lowerleft\pgf@y-\pgf@y}{\apex}
+			}{
+				\pgfpointlineattime{0.3}{\lowerleft\pgf@y-\pgf@y}{\apex}
+			}
+			\pgfpathclose
+			}
+    }
+
+}
+
+
+% DEFINITION OF SHAPE AND PORTS OF A ZEROCELL
+\pgfdeclareshape{zerocellule}{
+
+    \inheritsavedanchors[from=circle]
+    \inheritbackgroundpath[from=circle]
+    \inheritanchorborder[from=circle]
+    \inheritanchor[from=circle]{center}
+    \inheritanchor[from=circle]{south}
+    \inheritanchor[from=circle]{north}
+    \inheritanchor[from=circle]{east}
+    \inheritanchor[from=circle]{west}
+    \inheritanchor[from=circle]{north east}
+    \inheritanchor[from=circle]{north west}
+    \inheritanchor[from=circle]{south east}
+    \inheritanchor[from=circle]{south west}
+
+	\anchor{n}{\pgf@anchor@zerocellule@north}
+	\anchor{above n}{\pgfpointadd{\pgfpoint{0cm}{\abovedistance}}{\pgf@anchor@zerocellule@n}}
+    \anchor{above above n}{\pgfpointadd{\pgfpoint{0cm}{\aboveabovedistance}}{\pgf@anchor@zerocellule@n}}
+    
+    \anchor{s}{\pgf@anchor@zerocellule@south}
+    \anchor{above s}{\pgfpointadd{\pgfpoint{0cm}{-\abovedistance}}{\pgf@anchor@zerocellule@s}}
+    \anchor{above above s}{\pgfpointadd{\pgfpoint{0cm}{-\aboveabovedistance}}{\pgf@anchor@zerocellule@s}}
+    
+    \anchor{w}{\pgf@anchor@zerocellule@west}
+    \anchor{above w}{\pgfpointadd{\pgfpoint{-\abovedistance}{0cm}}{\pgf@anchor@zerocellule@w}}
+    \anchor{above above w}{\pgfpointadd{\pgfpoint{-\aboveabovedistance}{0cm}}{\pgf@anchor@zerocellule@w}}
+    
+    \anchor{e}{\pgf@anchor@zerocellule@east}
+    \anchor{above e}{\pgfpointadd{\pgfpoint{\abovedistance}{0cm}}{\pgf@anchor@zerocellule@e}}
+    \anchor{above above e}{\pgfpointadd{\pgfpoint{\aboveabovedistance}{0cm}}{\pgf@anchor@zerocellule@e}}
+    
+    \anchor{ne}{\csname pgf@anchor@zerocellule@north east\endcsname}
+    \anchor{above ne}{\pgfpointadd{\pgfpoint{.7*\abovedistance}{.7*\abovedistance}}{\pgf@anchor@zerocellule@ne}}
+    \anchor{above above ne}{\pgfpointadd{\pgfpoint{.7*\aboveabovedistance}{.7*\aboveabovedistance}}{\pgf@anchor@zerocellule@ne}}
+    
+    \anchor{nw}{\csname pgf@anchor@zerocellule@north west\endcsname}
+    \anchor{above nw}{\pgfpointadd{\pgfpoint{-.7*\abovedistance}{.7*\abovedistance}}{\pgf@anchor@zerocellule@nw}}
+    \anchor{above above nw}{\pgfpointadd{\pgfpoint{-.7*\aboveabovedistance}{.7*\aboveabovedistance}}{\pgf@anchor@zerocellule@nw}}
+    
+    \anchor{se}{\csname pgf@anchor@zerocellule@south east\endcsname}
+    \anchor{above se}{\pgfpointadd{\pgfpoint{.7*\abovedistance}{-.7*\abovedistance}}{\pgf@anchor@zerocellule@se}}
+    \anchor{above above se}{\pgfpointadd{\pgfpoint{.7*\aboveabovedistance}{-.7*\aboveabovedistance}}{\pgf@anchor@zerocellule@se}}
+	
+	\anchor{sw}{\csname pgf@anchor@zerocellule@south west\endcsname}
+    \anchor{above sw}{\pgfpointadd{\pgfpoint{-.7*\abovedistance}{-.7*\abovedistance}}{\pgf@anchor@zerocellule@sw}}
+    \anchor{above above sw}{\pgfpointadd{\pgfpoint{-.7*\aboveabovedistance}{-.7*\aboveabovedistance}}{\pgf@anchor@zerocellule@sw}}
+    
+    \anchor{northeast}{\pgf@anchor@zerocellule@ne}
+    \anchor{northwest}{\pgf@anchor@zerocellule@nw}
+    \anchor{southeast}{\pgf@anchor@zerocellule@se}
+    \anchor{southwest}{\pgf@anchor@zerocellule@sw}
+    
+    \anchor{above north}{\csname pgf@anchor@zerocellule@above n\endcsname}
+    \anchor{above south}{\csname pgf@anchor@zerocellule@above s\endcsname}
+    \anchor{above east}{\csname pgf@anchor@zerocellule@above e\endcsname}
+    \anchor{above west}{\csname pgf@anchor@zerocellule@above w\endcsname}
+    \anchor{above northeast}{\csname pgf@anchor@zerocellule@above ne\endcsname}
+    \anchor{above northwest}{\csname pgf@anchor@zerocellule@above nw\endcsname}
+    \anchor{above southeast}{\csname pgf@anchor@zerocellule@above se\endcsname}
+    \anchor{above southwest}{\csname pgf@anchor@zerocellule@above sw\endcsname}
+    
+    \anchor{above above north}{\csname pgf@anchor@zerocellule@above above n\endcsname}
+    \anchor{above above south}{\csname pgf@anchor@zerocellule@above above s\endcsname}
+    \anchor{above above east}{\csname pgf@anchor@zerocellule@above above e\endcsname}
+    \anchor{above above west}{\csname pgf@anchor@zerocellule@above above w\endcsname}
+    \anchor{above above northeast}{\csname pgf@anchor@zerocellule@above above ne\endcsname}
+    \anchor{above above northwest}{\csname pgf@anchor@zerocellule@above above nw\endcsname}
+    \anchor{above above southeast}{\csname pgf@anchor@zerocellule@above above se\endcsname}
+    \anchor{above above southwest}{\csname pgf@anchor@zerocellule@above above sw\endcsname}
+}
+
+
+% DEFINITION OF SHAPE AND PORTS OF A NODE
+%	in order to help building wires
+\pgfdeclareshape{coordonnee}{
+
+    \inheritsavedanchors[from=coordinate]
+    \inheritanchorborder[from=coordinate]
+    \inheritanchor[from=coordinate]{center}
+
+    \anchor{n}{\pgf@anchor@coordonnee@center}
+	\anchor{above n}{\pgfpointadd{\pgfpoint{0cm}{\abovedistance}}{\pgf@anchor@coordonnee@n}}
+    \anchor{above above n}{\pgfpointadd{\pgfpoint{0cm}{\aboveabovedistance}}{\pgf@anchor@coordonnee@n}}
+    
+	\anchor{s}{\pgf@anchor@coordonnee@center}
+    \anchor{above s}{\pgfpointadd{\pgfpoint{0cm}{-\abovedistance}}{\pgf@anchor@coordonnee@s}}
+    \anchor{above above s}{\pgfpointadd{\pgfpoint{0cm}{-\aboveabovedistance}}{\pgf@anchor@coordonnee@s}}
+    
+	\anchor{w}{\pgf@anchor@coordonnee@center}
+    \anchor{above w}{\pgfpointadd{\pgfpoint{-\abovedistance}{0cm}}{\pgf@anchor@coordonnee@w}}
+    \anchor{above above w}{\pgfpointadd{\pgfpoint{-\aboveabovedistance}{0cm}}{\pgf@anchor@coordonnee@w}}
+    
+	\anchor{e}{\pgf@anchor@coordonnee@center}
+    \anchor{above e}{\pgfpointadd{\pgfpoint{\abovedistance}{0cm}}{\pgf@anchor@coordonnee@e}}
+    \anchor{above above e}{\pgfpointadd{\pgfpoint{\aboveabovedistance}{0cm}}{\pgf@anchor@coordonnee@e}}
+    
+    \anchor{ne}{\pgf@anchor@coordonnee@center}
+    \anchor{above ne}{\pgfpointadd{\pgfpoint{.7*\abovedistance}{.7*\abovedistance}}{\pgf@anchor@coordonnee@ne}}
+    \anchor{above above ne}{\pgfpointadd{\pgfpoint{.7*\aboveabovedistance}{.7*\aboveabovedistance}}{\pgf@anchor@coordonnee@ne}}
+    
+    \anchor{nw}{\pgf@anchor@coordonnee@center}
+    \anchor{above nw}{\pgfpointadd{\pgfpoint{-.7*\abovedistance}{.7*\abovedistance}}{\pgf@anchor@coordonnee@nw}}
+    \anchor{above above nw}{\pgfpointadd{\pgfpoint{-.7*\aboveabovedistance}{.7*\aboveabovedistance}}{\pgf@anchor@coordonnee@nw}}
+    
+    \anchor{se}{\pgf@anchor@coordonnee@center}
+    \anchor{above se}{\pgfpointadd{\pgfpoint{.7*\abovedistance}{-.7*\abovedistance}}{\pgf@anchor@coordonnee@se}}
+    \anchor{above above se}{\pgfpointadd{\pgfpoint{.7*\aboveabovedistance}{-.7*\aboveabovedistance}}{\pgf@anchor@coordonnee@se}}
+    
+    \anchor{sw}{\pgf@anchor@coordonnee@center}
+    \anchor{above sw}{\pgfpointadd{\pgfpoint{-.7*\abovedistance}{-.7*\abovedistance}}{\pgf@anchor@coordonnee@sw}}
+    \anchor{above above sw}{\pgfpointadd{\pgfpoint{-.7*\aboveabovedistance}{-.7*\aboveabovedistance}}{\pgf@anchor@coordonnee@sw}}
+    
+    \anchor{north}{\pgf@anchor@coordonnee@n}
+    \anchor{south}{\pgf@anchor@coordonnee@s}
+    \anchor{east}{\pgf@anchor@coordonnee@e}
+    \anchor{west}{\pgf@anchor@coordonnee@w}
+    \anchor{northeast}{\pgf@anchor@coordonnee@ne}
+    \anchor{northwest}{\pgf@anchor@coordonnee@nw}
+    \anchor{southeast}{\pgf@anchor@coordonnee@se}
+    \anchor{southwest}{\pgf@anchor@coordonnee@sw}
+    
+    \anchor{above north}{\csname pgf@anchor@coordonnee@above n\endcsname}
+    \anchor{above south}{\csname pgf@anchor@coordonnee@above s\endcsname}
+    \anchor{above east}{\csname pgf@anchor@coordonnee@above e\endcsname}
+    \anchor{above west}{\csname pgf@anchor@coordonnee@above w\endcsname}
+    \anchor{above northeast}{\csname pgf@anchor@coordonnee@above ne\endcsname}
+    \anchor{above northwest}{\csname pgf@anchor@coordonnee@above nw\endcsname}
+    \anchor{above southeast}{\csname pgf@anchor@coordonnee@above se\endcsname}
+    \anchor{above southwest}{\csname pgf@anchor@coordonnee@above sw\endcsname}
+    
+    \anchor{above above north}{\csname pgf@anchor@coordonnee@above above n\endcsname}
+    \anchor{above above south}{\csname pgf@anchor@coordonnee@above above s\endcsname}
+    \anchor{above above east}{\csname pgf@anchor@coordonnee@above above e\endcsname}
+    \anchor{above above west}{\csname pgf@anchor@coordonnee@above above w\endcsname}
+    \anchor{above above northeast}{\csname pgf@anchor@coordonnee@above above ne\endcsname}
+    \anchor{above above northwest}{\csname pgf@anchor@coordonnee@above above nw\endcsname}
+    \anchor{above above southeast}{\csname pgf@anchor@coordonnee@above above se\endcsname}
+    \anchor{above above southwest}{\csname pgf@anchor@coordonnee@above above sw\endcsname}
+
+    
+    % For compatibility with some definitions of wires, ports, etc.
+    \anchor{above center}{
+		\pgf@anchor@coordonnee@center
+    }
+    \anchor{above above center}{
+		\pgf@anchor@coordonnee@center
+    }
+}
+%%%%%   END OF                                              %%%%%
+%%   SHAPES AND PORTS OF MULTICELLS, CELLS, ZEROCELLS, NODES   %%
+
+
+\newcommand{\inetoptions}{\setkeys{inet}}
+\newcommand{\inetcolor}{red}
+\define@key{inet}{color}{\renewcommand{\inetcolor}{#1}}
+\newcommand{\inet@defaultangle}{0}
+\define@key{inet}{defaultangle}{\renewcommand{\inet@defaultangle}{#1}}
+
+\newcount\inet@angle
+\inet@angle=0
+
+%  DEFINITIONS OF STYLES FOR PORTS, WIRE, FREE WIRES, BOXES;
+%	Normal styles
+\tikzset{portstyle/.style = {draw, line width=0.3ex, line cap=rect}}
+\tikzset{wirestyle/.style = {draw, line width=0.15ex, line cap=rect}}
+\tikzset{freewirestyle/.style = {draw, line width=0.15ex, line cap=rect}}
+\tikzset{cellstyle/.style = {
+    draw, line width=0.2ex, fill=white,
+    inner sep=0.2ex,
+    minimum height=\inetcellheight,%
+    }}
+\tikzset{boxstyle/.style = {draw,line width=0.1ex}}
+%	Fancy styles
+\tikzfading[name=inet fading,
+    left color=transparent!0,
+    right color=transparent!100]
+\tikzset{fancyportstyle/.style = {draw, line width=0.3ex,
+    draw=black!50!#1,
+    double=white!50!#1,double distance=0.2ex,
+   }}
+\tikzset{fancywirestyle/.style = {draw, line width=0.15ex,
+    draw=black!50!#1,
+    double=white!50!#1,double distance=0.2ex,
+   }}
+\tikzset{fancyfreewirestyle/.style = {draw, line width=0.15ex,
+    draw=black!50!#1,
+    double=white!50!#1,double distance=0.2ex,
+   }}
+\tikzset{fancycellstyle/.style={%
+    general shadow={fill, shadow scale=1.0,%
+    shadow xshift=0.3ex,shadow yshift=-0.3ex,opacity=0.2},
+    line width=0.15ex,%
+    inner sep=0.2ex,%
+    draw=black!50!#1,%
+    top color=#1,%
+    bottom color=white,%!80!#1,%
+    shading angle=\inet@angle,%
+    minimum height=\inetcellheight,%
+    }}
+\tikzset{fancyboxstyle/.style = {line width=0.2ex,fill opacity=0.5,
+    fill=white!20!#1,draw=black!30!#1}}
+
+\newif\ifinet@fancy\inet@fancyfalse
+
+%	Package options 'fancy' and 'nofancy'
+\DeclareOption{fancy}{\inet@fancytrue}
+\DeclareOption{nofancy}{\inet@fancyfalse}
+
+%   Commands for defining your own fancy style 
+\newcommand{\inetfancy}{\inet@fancytrue}
+\newcommand{\inetnofancy}{\inet@fancyfalse}
+
+\newcommand{\inetsetfancycellstyle}[1]{
+    \tikzset{fancycellstyle/.style = {#1}}%
+}
+\newcommand{\inetsetfancywirestyle}[1]{
+    \tikzset{fancywirestyle/.style = {#1}}%
+}
+\newcommand{\inetsetfancyfreewirestyle}[1]{
+    \tikzset{fancyfreewirestyle/.style = {#1}}%
+}
+\newcommand{\inetsetfancyportstyle}[1]{
+    \tikzset{fancyportstyle/.style = {#1}}%
+}
+\newcommand{\inetsetfancyboxstyle}[1]{
+    \tikzset{fancyboxstyle/.style = {#1}}%
+}
+
+\DeclareOption*{\expandafter\inetoptions\expandafter{\CurrentOption}}
+\ProcessOptions\relax
+
+\pgfdeclarelayer{above layer}
+\pgfdeclarelayer{wire layer}
+\pgfdeclarelayer{box layer}
+\pgfdeclarelayer{below layer}
+\pgfsetlayers{below layer,box layer,wire layer,main,above layer}
+
+\makeatletter
+
+%	Internal commands for elements to take normal or fancy style
+\newcommand{\inetcellstyle}{%
+    \ifinet@fancy fancycellstyle\else cellstyle\fi%
+}
+\newcommand{\inetportstyle}{%
+    \ifinet@fancy fancyportstyle\else portstyle\fi%
+}
+\newcommand{\inetwirestyle}{%
+    \ifinet@fancy fancywirestyle\else wirestyle\fi%
+}
+\newcommand{\inetboxstyle}{%
+    \ifinet@fancy fancyboxstyle\else boxstyle\fi%
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%		COMMANDS FOR USING ELEMENTS		%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%
+%%%   CELLS   %%%
+%%%%%%%%%%%%%%%%%
+
+%%%  MULTICELL   %%%
+%	\inetmulticell[tikz-option](name){label}{coarity}{arity}{position}[direction]
+\newcommand{\INETmulticell}[1][]{%
+    \@ifnextchar({%
+		\inetmulticell@ii[#1]%
+    }{%
+		\inetmulticell@iib[#1]%
+    }%
+}
+\def\inetmulticell@iib[#1]#2{%
+    \inetmulticell@ii[#1](#2){#2}%
+}
+\def\inetmulticell@ii[#1](#2)#3#4#5{%
+    \@ifnextchar;{
+		\inetmulticell@iv[#1](#2){#3}{#4}{#5}{0,0}[\inet@defaultangle]%
+    }{
+		\@ifnextchar[{
+			\inetmulticell@iii[#1](#2){#3}{#4}{#5}{0,0}
+		}{ 
+			\inetmulticell@iii[#1](#2){#3}{#4}{#5}
+		}
+	}
+}
+% \def\inetmulticell@iii[#1](#2)#3#4#5#6{%
+%     \@ifnextchar[{%
+% 		\inetmulticell@iv[#1](#2){#3}{#4}{#5}{#6}%
+%     }{%
+% 		\@ifnextchar+{%
+% 			\inetmulticell@iiib[#1](#2){#3}{#4}{#5}{#6}%
+% 		}{%
+% 			\inetmulticell@iv[#1](#2){#3}{#4}{#5}{#6}[\inet@defaultangle]%
+% 		}%
+% 	}%
+% }%
+\def\inetmulticell@iii[#1](#2)#3#4#5#6{%
+	\@ifnextchar+{%
+		\inetmulticell@iiia[#1](#2){#3}{#4}{#5}(#6)%
+	}{
+		\inetmulticell@iiib[#1](#2){#3}{#4}{#5}{#6}%
+	}
+}
+\def\inetmulticell@iiia[#1](#2)#3#4#5(#6)+{%
+	\@ifnextchar+{%
+		\inetmulticell@iiiaa[#1](#2){#3}{#4}{#5}(#6)%
+	}{
+		\inetmulticell@iiiab[#1](#2){#3}{#4}{#5}(#6)%
+	}
+}
+\def\inetmulticell@iiiaa[#1](#2)#3#4#5(#6.#7)+#8{%
+	\@ifnextchar:{%
+		\inetmulticell@iiiaaa[#1](#2)#3#4#5(#6.#7)+#8%
+	}{%
+		\@ifnextchar[{%
+			\inetmulticell@iv[#1](#2){#3}{#4}{#5}{$(#6.#7)!#8cm!(#6.above above #7)$}%
+		}{%
+			\inetmulticell@iv[#1](#2){#3}{#4}{#5}{$(#6.#7)!#8cm!(#6.above above #7)$}[\inet@defaultangle]%
+		}%
+	}
+}%
+\def\inetmulticell@iiiaaa[#1](#2)#3#4#5(#6.#7)+#8:#9{
+	\@ifnextchar[{%
+			\inetmulticell@iv[#1](#2){#3}{#4}{#5}{$(#6.#7)!#8cm!#9:(#6.above above #7)$}%
+		}{%
+			\inetmulticell@iv[#1](#2){#3}{#4}{#5}{$(#6.#7)!#8cm!#9:(#6.above above #7)$}[\inet@defaultangle]%
+		}%
+}
+\def\inetmulticell@iiiab[#1](#2)#3#4#5(#6)#7{%
+    \@ifnextchar[{%
+		\inetmulticell@iv[#1](#2){#3}{#4}{#5}{$(#6)+(#7)$}%
+    }{%
+		\inetmulticell@iv[#1](#2){#3}{#4}{#5}{$(#6)+(#7)$}[\inet@defaultangle]%
+	}%
+}%
+\def\inetmulticell@iiib[#1](#2)#3#4#5#6{
+    \@ifnextchar[{%
+		\inetmulticell@iv[#1](#2){#3}{#4}{#5}{#6}%
+    }{%
+		\inetmulticell@iv[#1](#2){#3}{#4}{#5}{#6}[\inet@defaultangle]%
+	}%
+}%
+\def\inetmulticell@iv[#1](#2)#3#4#5#6[#7]{%
+	\def\incircle{false}
+    \ifthenelse{\equal{#7}{U}}{\inet@angle=-180}{%
+        \ifthenelse{\equal{#7}{D}}{\inet@angle=0}{%
+            \ifthenelse{\equal{#7}{R}}{\inet@angle=90}{%
+                \ifthenelse{\equal{#7}{L}}{\inet@angle=-90}
+										  {\inet@angle=#7
+											\def\incircle{true}}%
+            }%
+        }%
+    }%
+    \def\longueur{#4*\inetportsize}
+	\ifthenelse{\equal{#4}{1}}{
+		\ifthenelse{\equal{#5}{0}}{\inetzerocell[#1](#2){#3}{#6}}{
+			\inetcell@iv[arity=#5,#1](#2){#3}{#6}[#7]
+		}
+	}{
+		\node[%
+			\inetcellstyle=\inetcolor,%
+			shape border rotate=\inet@angle+180,%
+			trapezium angle=50,
+			trapezium stretches body,
+			multicellule,%
+			shape border uses incircle=\incircle,
+			minimum height=\inetcellheight,
+			minimum width=\longueur,
+			coarity=#4,
+			arity=#5,
+			#1] at (#6) (#2) {#3};%
+	}
+}
+
+
+%%%  SIMPLE CELL   %%%
+%	\inetcell[tikz-option](name){label}{position}[direction]
+%	for compatibility with earlier version, 'arity' is a tikz-option
+%		automatically added when defined from multicell
+\newcommand{\INETcell}[1][]{%
+    \@ifnextchar({%
+		\inetcell@ii[#1]%
+    }{%
+		\inetcell@iib[#1]%
+    }%
+}
+\def\inetcell@iib[#1]#2{%
+    \inetcell@ii[#1](#2){#2}%
+}
+\def\inetcell@ii[#1](#2)#3{%
+    \@ifnextchar;{%
+		\inetcell@iv[#1](#2){#3}{0,0}[\inet@defaultangle]%
+    }{%
+		\@ifnextchar[{%
+			\inetcell@iii[#1](#2){#3}{0,0}%
+		}{ \inetcell@iii[#1](#2){#3}%
+		}
+	}
+}
+% \def\inetcell@iii[#1](#2)#3#4{%
+%     \@ifnextchar[{%
+% 		\inetcell@iv[#1](#2){#3}(#4)%
+%     }{\inetcell@iv[#1](#2){#3}{#4}[\inet@defaultangle]}%
+% }
+\def\inetcell@iii[#1](#2)#3#4{%
+	\@ifnextchar+{%
+		\inetcell@iiia[#1](#2){#3}(#4)%
+	}{
+		\inetcell@iiib[#1](#2){#3}{#4}%
+	}
+}
+\def\inetcell@iiia[#1](#2)#3(#4)+{%
+	\@ifnextchar+{%
+		\inetcell@iiiaa[#1](#2){#3}(#4)%
+	}{
+		\inetcell@iiiab[#1](#2){#3}(#4)%
+	}
+}
+\def\inetcell@iiiaa[#1](#2)#3(#4.#5)+#6{%
+    \@ifnextchar[{%
+		\inetcell@iv[#1](#2){#3}{$(#4.#5)!#6cm!(#4.above above #5)$}%
+    }{%
+		\inetcell@iv[#1](#2){#3}{$(#4.#5)!#6cm!(#4.above above #5)$}[\inet@defaultangle]%
+	}%
+}%
+\def\inetcell@iiiab[#1](#2)#3(#4)#5{%
+    \@ifnextchar[{%
+		\inetcell@iv[#1](#2){#3}{$(#4)+(#5)$}%
+    }{%
+		\inetcell@iv[#1](#2){#3}{$(#4)+(#5)$}[\inet@defaultangle]%
+	}%
+}%
+\def\inetcell@iiib[#1](#2)#3#4{
+    \@ifnextchar[{%
+		\inetcell@iv[#1](#2){#3}{#4}%
+    }{%
+		\inetcell@iv[#1](#2){#3}{#4}[\inet@defaultangle]%
+	}%
+}%
+\def\inetcell@iv[#1](#2)#3#4[#5]{%
+    \ifthenelse{\equal{#5}{U}}{\inet@angle=180}{%
+        \ifthenelse{\equal{#5}{D}}{\inet@angle=0}{%
+            \ifthenelse{\equal{#5}{L}}{\inet@angle=270}{%
+                \ifthenelse{\equal{#5}{R}}{\inet@angle=90}{\inet@angle=#5}%
+            }%
+        }%
+    }%
+    \node[%
+    \inetcellstyle=\inetcolor,%
+    shape border rotate=\inet@angle-90,%
+    cellule,%
+    isosceles triangle apex angle=80,%
+    minimum height=\inetcellheight,%
+    shape border uses incircle, #1] at (#4) (#2) {#3};%
+}
+
+%%%  ZEROCELL   %%%
+%	\inetzerocell[tikz-option](name){label}{position}
+\newcommand{\INETzerocell}[1][]{%
+    \@ifnextchar({%
+		\inetzerocell@ii[#1]%
+    }{%
+		\inetzerocell@iib[#1]%
+    }%
+}
+\def\inetzerocell@iib[#1]#2{%
+    \inetzerocell@ii[#1](#2){#2}%
+}
+
+
+\def\inetzerocell@ii[#1](#2)#3#4{%
+	\@ifnextchar+{%
+		\inetzerocell@iiia[#1](#2){#3}(#4)%
+	}{
+		\inetzerocell@iv[#1](#2){#3}{#4}%
+	}
+}
+\def\inetzerocell@iiia[#1](#2)#3(#4)+{%
+	\@ifnextchar+{%
+		\inetzerocell@iiiaa[#1](#2){#3}(#4)%
+	}{
+		\inetzerocell@iiiab[#1](#2){#3}(#4)%
+	}
+}
+\def\inetzerocell@iiiaa[#1](#2)#3(#4.#5)+#6{%
+    \inetzerocell@iv[#1](#2){#3}{$(#4.#5)!#6cm!(#4.above above #5)$}%
+}%
+\def\inetzerocell@iiiab[#1](#2)#3(#4)#5{%
+	\inetzerocell@iv[#1](#2){#3}{$(#4)+(#5)$}%
+}%
+
+\def\inetzerocell@iv[#1](#2)#3#4{%
+    \node[%
+		\inetcellstyle=\inetcolor,%
+% 		shape border rotate=\inet@angle-90,%
+		zerocellule,%
+		shape border uses incircle,
+		minimum height=\inetcellheight,
+		#1] at (#4) (#2) {#3};%
+}
+
+
+
+
+
+%%%%%%%%%%%%%%%%%
+%%%   WIRES   %%%
+%%%%%%%%%%%%%%%%%
+
+%%%   INETNODE   %%%
+% %   \inetnode[bool](name){position}
+%		'bool' : if different from 'false', then it's a wire; default 'false'
+\newcommand{\INETnode}[1][]{%
+    \inetnode@i[#1]%
+}
+\def\inetnode@i[#1](#2)#3{%
+	\@ifnextchar+{%
+		\inetnode@iia[#1](#2)(#3)%
+	}{%
+		\inetnode@iii[#1](#2){#3}%
+	}
+}
+\def\inetnode@iia[#1](#2)(#3)+{%
+	\@ifnextchar+{%
+		\inetnode@iiaa[#1](#2)(#3)%
+	}{%
+		\inetnode@iiab[#1](#2)(#3)%
+	}
+}
+\def\inetnode@iiaa[#1](#2)(#3.#4)+#5{%
+	\@ifnextchar:{
+		\inetnode@iiaaa[#1](#2)(#3.#4)#5%
+	}{%
+		\inetnode@iii[#1](#2){$(#3.#4)!#5cm!(#3.above above #4)$}%
+	}
+}%
+\def\inetnode@iiaaa[#1](#2)(#3.#4)#5:#6{
+	\inetnode@iii[#1](#2){$(#3.#4)!#5cm!#6:(#3.above above #4)$}%
+}
+\def\inetnode@iiab[#1](#2)(#3)#4{%
+	\inetnode@iii[#1](#2){$(#3)+(#4)$}%
+}%
+\def\inetnode@iii[#1](#2)#3{%
+	\ifthenelse{\equal{#1}{wire}}
+		{\node[circle,inner sep=.4ex,fill] at (#3){};}%
+		{\node[circle,inner sep=.4ex,#1] at (#3){};}%
+	\ifshownodes%
+		\node[coordonnee,label=below right:#2] at (#3) (#2) {\signfornodes};%
+	\else
+		\node[coordonnee] at (#3) (#2) {};%
+	\fi
+}
+
+%%%   WIRE between any two POSITIONS (coordinates, nodes, ports...)   %%%
+\def\INETwirecoords{
+	\@ifnextchar[{\inetwirecoords@i}{\inetwirecoords@i[]}
+}
+
+\def\inetwirecoords@i[#1](#2)(#3){%
+    \begin{pgfonlayer}{wire layer}%
+        \draw[\ifinet@fancy fancywirestyle\else wirestyle\fi=\inetcolor,#1]%
+        (#2) -- (#3);%
+    \end{pgfonlayer}%
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Precise wire between two ports crossing already definied nodes                     %
+% \INETprecisewire[options](port 1)<node 1.enter:exit>...<node k:enter:exit>(port 2) %
+\newcommand{\INETprecisewire}[1][]{%
+    \inetcomplexwire[#1]%
+}
+\def\inetcomplexwire[#1](#2.#3){%
+	\@ifnextchar({%
+		\inettwowire[#1](#2.#3)%
+	}{
+		\@ifnextchar+{%
+			\inetwire@above[#1](#2.#3)%
+		}{%
+% 			\inetcomplexwire@start[#1](#2.#3)%
+			\unwrapwirestart[#1](#2.#3)%
+		}
+	}
+}
+\def\inettwowire[#1](#2.#3)(#4.#5){%
+    \begin{pgfonlayer}{\inetwirelayer}%
+        \draw[\inetwirestyle=\inetcolor,#1]%
+        (#2.#3) to (#2.above #3) .. controls (#2.above above #3) and (#4.above above #5) .. (#4.above #5) to (#4.#5);%
+    \end{pgfonlayer}%
+}
+\def\inetwire@above[#1](#2.#3)++#4{
+	\begin{pgfonlayer}{\inetwirelayer}%
+        \draw[\inetwirestyle=\inetcolor,#1]%
+        (#2.#3) -- ($(#2.#3)!#4cm!(#2.above #3)$);%
+    \end{pgfonlayer}%
+}
+\def\inetcomplexwire@start[#1](#2.#3)<#4.#5:#6>{%
+	\inetwirecoords[#1](#2.#3)(#2.above #3)%
+	\begin{pgfonlayer}{\inetwirelayer}%
+		\draw[\inetwirestyle=\inetcolor,#1]%
+			(#2.above #3) .. controls (#2.above above #3) and (#4.above above #5) .. (#4.above #5);%
+% 	\end{pgfonlayer}%
+	\inetcomplexwire@then[#1]<#4.#5:#6>%
+}
+\def\inetcomplexwire@then[#1]<#2.#3:#4>{%
+	\@ifnextchar({%
+		\inetcomplexwire@end[#1]<#2.#3:#4>%
+	}{
+		\inetcomplexwire@continue[#1]<#2.#3:#4>%
+	}
+}%
+\def\inetcomplexwire@continue[#1]<#2.#3:#4><#5.#6:#7>{
+% 	\begin{pgfonlayer}{wire layer}%
+		\draw[\inetwirestyle=\inetcolor,#1]%
+			(#2.above #3) .. controls (#2.#3) and (#2.#4) .. (#2.above #4) .. controls (#2.above above #4) and  (#5.above above #6) .. (#5.above #6);%
+% 	\end{pgfonlayer}%
+	\inetcomplexwire@then[#1]<#5.#6:#7>%
+}
+\def\inetcomplexwire@end[#1]<#2.#3:#4>(#5.#6){%
+% 	\begin{pgfonlayer}{wire layer}%
+		\draw[\inetwirestyle=\inetcolor,#1]%
+			(#2.above #3) .. controls (#2.#3) and (#2.#4) .. (#2.above #4) .. controls (#2.above above #4) and  (#5.above above #6) .. (#5.above #6) to (#5.#6);%
+	\end{pgfonlayer}%
+}
+
+\def\unwrapnode<#1.#2:#3>{.. controls (#1.#2) and (#1.#3) ..}
+
+\def\unwraptwonodes<#1.#2:#3><#4.#5:#6>{(#1.above #3) .. controls (#1.above above #3) and  (#4.above above #5) .. (#4.above #5)}
+
+\def\unwrapwirestart[#1](#2.#3)<#4.#5:#6>{
+	\@ifnextchar({
+	\unwrapwireend{[#1](#2.#3)  .. controls (#2.above above #3) and (#4.above above #5) .. (#4.above #5)}<#4.#5:#6>%
+	}{
+	\unwrapwirecontinue{[#1](#2.#3)  .. controls (#2.above above #3) and (#4.above above #5) ..(#4.above #5)}<#4.#5:#6>%
+	}
+}
+\def\unwrapwirecontinue#1<#2.#3:#4><#5.#6:#7>{
+	\@ifnextchar({
+		\unwrapwireend{#1 \unwrapnode<#2.#3:#4> \unwraptwonodes<#2.#3:#4><#5.#6:#7>}<#5.#6:#7>%
+	}{
+		\unwrapwirecontinue{#1 \unwrapnode<#2.#3:#4> \unwraptwonodes<#2.#3:#4><#5.#6:#7>}<#5.#6:#7>%
+	}
+}
+\def\unwrapwireend#1<#2.#3:#4>(#5.#6){
+	\begin{pgfonlayer}{\inetwirelayer}%
+        \draw[\inetwirestyle=\inetcolor] #1 \unwrapnode<#2.#3:#4> (#2.above #4) .. controls (#2.above above #4) and (#5.above above #6) .. (#5.#6);
+    \end{pgfonlayer}
+}
+% End of definition of Precise Wires %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Commands for a simpler syntax but less precise complex wire       %
+% \inetsmoothwire[options](name)(port 1)<node 1>...<node k>(port 2) %
+
+\def\inetbetween#1#2{($(#1)!.4cm!(#2)$)}
+
+\def\unwrapone<#1>{.. controls (#1) .. }
+
+\def\unwraptwo<#1><#2>{\inetbetween{#1}{#2} -- \inetbetween{#2}{#1}}
+
+\def\unwrapstart[#1](#2.#3)<#4>{
+	\@ifnextchar({
+	\unwrapend{[#1](#2.#3)  .. controls (#2.above above #3) .. \inetbetween{#4}{#2.above above #3}}<#4>%
+	}{
+	\unwrapcontinue{[#1](#2.#3)  .. controls (#2.above above #3) .. \inetbetween{#4}{#2.above above #3}}<#4>%
+	}
+}
+\def\unwrapcontinue#1<#2><#3>{
+	\@ifnextchar({
+		\unwrapend{#1 \unwrapone<#2> \unwraptwo<#2><#3>}<#3>%
+	}{
+		\unwrapcontinue{#1 \unwrapone<#2> \unwraptwo<#2><#3>}<#3>%
+	}
+}
+\def\unwrapend#1<#2>(#3.#4){
+	\begin{pgfonlayer}{\inetwirelayer}%
+        \draw[\inetwirestyle=\inetcolor] #1 \unwrapone<#2> \inetbetween{#2}{#3.above above #4} .. controls (#3.above above #4) .. (#3.#4);
+    \end{pgfonlayer}
+}
+
+\def\thesmoothtwowire[#1](#2.#3)(#4.#5){
+	\begin{pgfonlayer}{\inetwirelayer}%
+        \draw[\inetwirestyle=\inetcolor,#1]%
+        (#2.#3) .. controls (#2.above above #3) and (#4.above above #5) .. (#4.#5);%
+    \end{pgfonlayer}%
+}
+\def\thesmoothwireabove[#1](#2.#3)++#4{%
+	\begin{pgfonlayer}{\inetwirelayer}%
+        \draw[\inetwirestyle=\inetcolor,#1]%
+        (#2.#3) -- ($(#2.#3)!#4cm!(#2.above #3)$);%
+    \end{pgfonlayer}%
+}
+\def\thesmoothwire@true[#1](#2.#3){%
+	\@ifnextchar({%
+		\thesmoothtwowire[#1](#2.#3)%
+	}{%
+		\@ifnextchar+{%
+			\thesmoothwireabove[#1](#2.#3)%
+		}{%
+			\unwrapstart[#1](#2.#3)%
+		}
+	}
+}
+\newcommand{\INETsmoothwire}[1][]{
+    \thesmoothwire@true[#1]%
+}
+% End of %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%  definition of Smooth Wires %
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% SHORT and VERY SHORT WIRE in case the two ports are too close for normal wire %
+% \INETshortwire[options](port 1)(port 2)
+\newcommand{\INETshortwire}[1][]{%
+    \inetshortwire@i[#1]%
+}
+\def\inetshortwire@i[#1](#2.#3)(#4.#5){%
+    \begin{pgfonlayer}{\inetwirelayer}%
+        \draw[\inetwirestyle=\inetcolor,#1]%
+        (#2.#3) .. controls (#2.above above #3) and (#4.above above #5) .. (#4.#5);%
+    \end{pgfonlayer}%
+}
+% \INETveryshortwire[options](port 1)(port 2)
+\newcommand{\INETveryshortwire}[1][]{%
+    \inetveryshortwire@i[#1]%
+}
+\def\inetveryshortwire@i[#1](#2.#3)(#4.#5){%
+    \begin{pgfonlayer}{\inetwirelayer}%
+        \draw[\inetwirestyle=\inetcolor,#1]%
+        (#2.#3) .. controls (#2.above #3) and (#4.above #5) .. (#4.#5);%
+    \end{pgfonlayer}%
+}
+
+%%%%%%%%%%%%%%%%%%%
+% PORT            %
+% \INETport(port) %
+\newcommand{\INETport}[1][]{%
+    \inetport@i[#1]%
+}
+\def\inetport@i[#1](#2.#3){%
+    \begin{pgfonlayer}{wire layer}%
+        \draw[\ifinet@fancy fancyportstyle\else portstyle\fi=\inetcolor,#1]%
+        (#2.#3) -- (#2.above #3);%
+    \end{pgfonlayer}%
+}
+\newcommand{\INETportnamed}[1][]{%
+    \inetportnamed@i[#1]%
+}
+\def\inetportnamed@i[#1](#2)(#3.#4){%
+	\@ifnextchar[{\inetportnamed@ii[#1](#2)(#3.#4)}{
+    \begin{pgfonlayer}{wire layer}%
+        \draw[\ifinet@fancy fancyportstyle\else portstyle\fi=\inetcolor,#1]%
+        (#3.#4) -- (#3.above #4);%
+        \node at ($(#3.above #4)!-\inetportnamedistance!(#3.#4)$) {#2};
+    \end{pgfonlayer}%
+    }
+}
+\def\inetportnamed@ii[#1](#2)(#3.#4)[#5]{%
+	\@ifnextchar[{\inetportnamed@ii[#1](#2)(#3.#4)}{
+    \begin{pgfonlayer}{wire layer}%
+        \draw[\ifinet@fancy fancyportstyle\else portstyle\fi=\inetcolor,#1]%
+        (#3.#4) -- (#3.above #4) node[#5] {#2};%
+%         \node at ($(#3.above #4)!-\inetportnamedistance!(#3.#4)$) {#2};
+    \end{pgfonlayer}%
+    }
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% FREE WIRE sticking from PORT %
+% \INETwirefree(port)          %
+\newcommand{\INETwirefree}[1][]{\inetwirefree@i[#1]}
+% \def\wirefreeshort[#1](#2.#3){\inetwire[#1](#2.#3)++{\inetfreewirelength}}
+
+\def\inetwirefree@i[#1](#2.#3){
+	\begin{pgfonlayer}{\inetwirelayer}%
+        \draw[\inetwirestyle=\inetcolor,#1]%
+        (#2.#3) -- ($(#2.#3)!\inetwirefreelength!(#2.above #3)$);%
+    \end{pgfonlayer}%
+}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% DOTS ABOVE A CELL FOR RANDOM NUMBER OF PORTS OR WIRES %
+% \INETdotsabove[direction](port)                           %
+\newcommand{\INETdotsabove}[1][h]{%
+	\inetdotsabove@i[#1]%
+}
+\def\inetdotsabove@i[#1](#2.#3){%
+	\ifthenelse{\equal{#1}{h}}%
+		{\node at (#2.above #3) {$\ldots$};}%
+		{\node[rotate=90] at (#2.above #3) {$\ldots$};}%
+}
+\def\inetabove(#1.#2)#3{%
+	\node at (#1.above #2) {#3};%
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% DOTS BETWEEN two POSITIONS (coordinates, cells, ports, nodes, ...) %
+% \INETdotsbetween[direction](position 1)(position 2)                %
+\newcommand{\INETdotsbetween}[1][h]{
+	\ifthenelse{\equal{#1}{v}}%
+		{\nodebetween@vertical{$\ldots$}}%
+		{\nodebetween{$\ldots$}}%
+}
+\def\nodebetween#1(#2)(#3){
+	\node at ($(#2)!.5!(#3)$) {#1};
+}
+\def\nodebetween@vertical#1(#2)(#3){
+	\node[rotate=90] at ($(#2)!.5!(#3)$) {#1};
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% NODE BETWEEN two POSITIONS (coordinates, cells, ports, nodes, ...) %
+% \INETnodebetween[name](position 1)(position 2)                     %
+\def\INETnodebetween(#1)(#2)(#3){
+	\inetnode(#1){$(#2)!.5!(#3)$}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% CYCLE OR LOOP                    %
+% \inetloop[tikz-option]{position} %
+\newcommand{\INETloop}[2][]{%
+    \begin{pgfonlayer}{wire layer}%
+        \node[\ifinet@fancy fancywirestyle\else wirestyle\fi=\inetcolor,%
+        circle,inner sep=1.5ex,#1] at (#2) {};
+    \end{pgfonlayer}%
+}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%   MULTIWIRES                                                                    %%%
+%	\inetmultiwire[tikz-option](name){position}(port 1)(...)(port n)[free port angle] %
+% 		'free port angle' is optional
+\newcommand{\INETmultiwire}{%
+	\@ifnextchar[{\inetmultiwire@i}{\inetmultiwire@i[]}%
+}
+% Defining the exact position and name of the node of the multiwire
+\def\inetmultiwire@i[#1]{%
+	\@ifnextchar({\inetmultiwire@ii[#1]}{\inetmultiwire@ii[#1](temp)}%
+}
+\def\inetmultiwire@ii[#1](#2)#3{%
+	\@ifnextchar+{%
+		\inetmultiwire@iia[#1](#2){#3}%
+	}{%
+		\inetmultiwire@iib[#1](#2){#3}%
+	}
+}
+\def\inetmultiwire@iia[#1](#2)#3+{
+	\@ifnextchar+{%
+		\inetmultiwire@iiaa[#1](#2)(#3)%
+	}{%
+		\inetmultiwire@iiab[#1](#2)(#3)%
+	}
+}
+\def\inetmultiwire@iiaa[#1](#2)(#3.#4)+#5{%
+	\@ifnextchar:{
+		\inetmultiwire@iiaaa[#1](#2)(#3.#4)#5%
+	}{%
+		\inetnode[wire](#2){$(#3.#4)!#5cm!(#3.above above #4)$}%
+		\inetmultiwire@iii[#1](#2)%
+	}
+}
+\def\inetmultiwire@iiaaa[#1](#2)(#3.#4)#5:#6{
+	\inetnode[wire](#2){$(#3.#4)!#5cm!#6:(#3.above above #4)$}%
+	\inetmultiwire@iii[#1](#2)%
+}
+\def\inetmultiwire@iiab[#1](#2)(#3)#4{
+	\inetnode[wire](#2){$(#3)+(#4)$}%
+	\inetmultiwire@iii[#1](#2)%
+}
+\def\inetmultiwire@iib[#1](#2)#3{
+	\inetnode[wire](#2){#3}%
+	\inetmultiwire@iii[#1](#2)%
+}
+% Branches of the multiwire
+\def\inetmultiwire@iii[#1](#2){%
+	\@ifnextchar({%
+		\inetmultiwire@toport[#1](#2)%
+	}{%
+		\@ifnextchar[{%
+			\inetmultiwirefreeport[#1](#2)%
+		}{%
+			\@ifnextchar<{
+				\inetmultiwire@throughnode[#1](#2)%
+			}{}
+		}%
+	}%
+}
+\def\inetmultiwire@toport[#1](#2)(#3.#4){
+	\inetwire[#1](#2.center)(#3.#4)%
+	\inetmultiwire@iii[#1](#2)%
+}
+\def\inetmultiwire@throughnode[#1](#2)<#3>(#4){
+	\inetwire[#1](#2.center)<#3>(#4)%
+	\inetmultiwire@iii[#1](#2)%
+}
+% FREE PORT of the multiwire if exists
+\def\inetmultiwirefreeport{%
+	\@ifnextchar[%
+		{\inetmultiwirefreeport@i}
+		{\inetmultiwirefreeport@i[]}%
+}
+\def\inetmultiwirefreeport@i[#1](#2)[#3]{%
+	\ifthenelse{\equal{#3}{U}}{\def\angle{90}}{%
+        \ifthenelse{\equal{#3}{D}}{\def\angle{270}}{%
+            \ifthenelse{\equal{#3}{L}}{\def\angle{180}}{%
+                \ifthenelse{\equal{#3}{R}}{\def\angle{0}}{\def\angle{#3}}%
+            }%
+        }%
+    }%
+    \begin{pgfonlayer}{wire layer}%
+	\draw[\ifinet@fancy fancyportstyle\else portstyle\fi=\inetcolor,line width=0,#1]%
+		(#2) -- +(\angle:2ex);%
+	\end{pgfonlayer}%
+}
+% End of %%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%  definition of Multiwires %
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% WIRE AROUND the LEFT and RIGHT side of a cell %
+% \inetwirearoundleft[tikz-option](port)(port)  %
+\newcommand{\INETwirearoundleft}{%
+	\@ifnextchar[{\inetwirearoundleft@i}{\inetwirearoundleft@i[]}
+}
+\def\inetwirearoundleft@i[#1](#2.#3)(#4.#5){%
+	\inetwirethrough[#1](#2.#3)(#2.leftext pal)(#4.leftext pax)(#4.#5)%
+}
+
+%	\inetwirearoundright[tikz-option](port)(port)
+\newcommand{\INETwirearoundright}{
+	\@ifnextchar[{\inetwirearoundright@i}{\inetwirearoundright@i[]}
+}
+\def\inetwirearoundright@i[#1](#2.#3)(#4.#5){%
+	\inetwirethrough[#1](#2.#3)(#2.rightext pal)(#4.rightext pax)(#4.#5)%
+}
+% Definition of a wire from 'port' to 'ext port' to 'other ext port' to 'port'
+%          for defining both '\inetwirearoundleft' and '\inetwirearoundlright'
+%          \inetwirearoundleft[tikz-option](port)(port)
+\def\inetwirethrough[#1](#2.#3)(#4.#5)(#6.#7)(#8.#9){%
+	\inetwire[#1](#2.#3)(#4.#5)%
+	\inetwirecoords[#1](#4.#5)(#6.#7)%
+	\inetwire[#1](#6.#7)(#8.#9)%
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% BRACES OVER CELLS for writing number of ports %
+%	\INETembrace(first port)(last port){variable}
+% 		- do not forget 'above' to have it further away
+%		- if messed up, try inverting ports
+\newcommand{\INETbrace}{
+	\inetbrace@i
+}
+\def\inetbrace@i(#1.#2)(#3.#4)#5{
+	\draw [decorate,decoration={brace,amplitude=4,raise=1ex},line width=.2ex]%
+			(#3.#4) -- coordinate[midway](M1) (#1.#2);
+% 			
+	\pgfpointanchor{M1}{center}
+	\pgfgetlastxy{\Mx}{\My}
+	\pgfpointanchor{#1}{#2}
+	\pgfgetlastxy{\leftx}{\lefty}
+	\node at ($(M1.center)!1.5em!(\Mx+\My-\lefty,\My+\leftx-\Mx)$) {#5};
+}
+
+\def\inetbraceabove(#1.#2)(#3.#4)#5[#6]{
+	\draw [decorate,decoration={brace,amplitude=4,raise=#6},line width=.2ex]%
+			(#3.#4) -- coordinate[midway](M1) (#1.#2);
+% 			
+	\pgfpointanchor{M1}{center}
+	\pgfgetlastxy{\Mx}{\My}
+	\pgfpointanchor{#1}{#2}
+	\pgfgetlastxy{\leftx}{\lefty}
+	\node at ($(M1.center)!2ex+#6!(\Mx+\My-\lefty,\My+\leftx-\Mx)$) {#5};
+}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Predefining some cells by giving LABEL, COARITY, ARITY %
+% \INETmulticelltype[options]{label}{coarity}{arity}     %
+\newcommand{\INETmulticelltype}[4][]{%
+	\inetmulticelltype@i[#1]{#2}{#3}{#4}%
+}
+\def\inetmulticelltype@i[#1]#2#3#4{
+	\@ifnextchar[{\inetmulticelltype@ii[#1]{#2}{#3}{#4}}%
+					{\inetmulticellXargs[#1]{#2}{#3}{#4}}%
+}
+\def\inetmulticelltype@ii[#1]#2#3#4[#5]{%
+	\inetmulticellXargs[#1,#5]{#2}{#3}{#4}%
+}
+\def\inetmulticellXargs[#1]#2#3#4{
+	\@ifnextchar({\inetmulticellXargs@i[#1]{#2}{#3}{#4}}
+		{\PackageError{tikz-inet}{Missing name in definition of special multi cell}}
+}
+\def\inetmulticellXargs@i[#1]#2#3#4(#5){%
+	\inetmulticell[#1](#5){#2}{#3}{#4}%
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Predefining some cell shapes by giving COARITY, ARITY %
+\newcommand{\INETmulticellshape}[3][]{%
+	\inetmulticellshape@i[#1]{#2}{#3}%
+}
+\def\inetmulticellshape@i[#1]#2#3{
+	\@ifnextchar[{\inetmulticellshape@ii[#1]{#2}{#3}}%
+					{\inetmulticellshapeXargs[#1]{#2}{#3}}%
+}
+\def\inetmulticellshape@ii[#1]#2#3[#4]{%
+	\inetmulticellshapeXargs[#1,#4]{#2}{#3}%
+}
+\def\inetmulticellshapeXargs[#1]#2#3{
+	\@ifnextchar({\inetmulticellshapeXargs@i[#1]{#2}{#3}}
+		{\PackageError{tikz-inet}{Missing name in definition of special shape of multi cell}}
+}
+\def\inetmulticellshapeXargs@i[#1]#2#3(#4)#5{%
+	\inetmulticell[#1](#4){#5}{#2}{#3}%
+}
+
+
+
+\iflinlogic
+	\RequirePackage{cmll}
+	\newcommand{\parrcell}{\inetmulticelltype{$\parr$}{1}{2}}
+	\newcommand{\withcell}{\inetmulticelltype{$\with$}{1}{2}}
+	\newcommand{\tensorcell}{\inetmulticelltype{$\parr$}{1}{2}}
+	\newcommand{\pluscell}{\inetmulticelltype{$\oplus$}{1}{2}}
+	\newcommand{\botcell}{\inetmulticelltype{$\bot$}{1}{0}}
+	\newcommand{\topcell}{\inetmulticelltype{$\bot$}{1}{0}}
+	\newcommand{\zerocell}{\inetmulticelltype{$0$}{1}{0}}
+	\newcommand{\onecell}{\inetmulticelltype{$1$}{1}{0}}
+	
+	\newcommand{\derelictioncell}{\inetmulticelltype{$\wn$}{1}{1}}
+	\newcommand{\contractioncell}{\inetmulticelltype{$\wn$}{1}{2}}
+	\newcommand{\weakeningcell}{\inetmulticelltype{$\wn$}{1}{0}}
+	
+	\newcommand{\whynotcell}[1][]{\inettestforcorrectoptions[#1]{$\wn$}}
+	\newcommand{\promcell}[1][]{\inettestforcorrectoptions[#1]{$\oc$}}
+	\def\inettestforcorrectoptions[#1]#2(#3)#4#5{%
+		\inetmulticell[#1](#3){#2}{1}{#4}{#5}%
+	}
+	
+\fi
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% EXPONENTIAL BOX                  %
+% \inetbox[tikz-option]{fit}(name) %
+\newcommand{\INETbox}[1][]{%
+    \inetbox@i[#1]%
+}
+\def\inetbox@i[#1]#2(#3){%
+    \begin{pgfonlayer}{box layer}%
+        \node[\ifinet@fancy fancyboxstyle\else boxstyle\fi=\inetcolor,
+        fit=#2,inner sep=10pt,#1] (#3) {};%
+    \end{pgfonlayer}%
+}
+%	\inetprombox[tikz-option]{fit}(name)		
+%	'name' correspond to the name of the !-cell;
+%	the name of the box will be the same preceded by 'b'
+\newcommand{\INETprombox}[1][]{%
+    \inetprombox@i[#1]%
+}
+\def\inetprombox@i[#1]#2(#3){%
+	\@ifnextchar[{\inetprombox@ii[#1]{#2}(#3)}{\inetprombox@ii[#1]{#2}(#3)[right]}
+}
+\def\inetprombox@ii[#1]#2(#3)[#4]{%
+	\ifthenelse{\equal{#4}{right}}{%
+		\def\promcellpos{.85}
+		\def\decallage{below left}
+		}{%
+			\ifthenelse{\equal{#4}{left}}{%
+				\def\promcellpos{.15}
+				\def\decallage{below  right}
+			}{%
+				\def\promcellpos{.5}%
+				\def\decallage{below}
+			}
+		}
+	\inetbox@i[#1]{#2}(b#3)%
+	\inetcell[below](#3){$!$}{$(b#3.south west)!\promcellpos!(b#3.south east)$}%
+   %\inetcell[above=-4ex of $(b#3.south west)!.75!(b#3.south)$](#3){$!$}% 
+}
+
+
+
+
+
+\makeatother
+
+\endinput
