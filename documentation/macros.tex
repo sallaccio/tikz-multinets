@@ -1,0 +1,88 @@
+% Copyright 2017 by Sallaccio
+%
+% This file may be distributed and/or modified
+%
+% 1. under the LaTeX Project Public License and/or
+% 2. under the GNU Public License.
+%
+
+
+%**************************************%
+%                NAMES                 %
+%______________________________________%
+
+\newcommand{\thisPackage}{Tikz-MultInets\xspace}
+\newcommand{\inetPackageLong}{v0.1 tikz interaction nets library by Marc de Falco\xspace}
+
+
+%**************************************%
+%         STYLING FOR COMMANDS         %
+%______________________________________%
+
+\newcommand{\command}[1]{/\/\texttt{#1}}
+\newcommand{\metablue}[1]{\textbf{\color{blue}\meta{#1}}}
+\newcommand{\metagreen}[1]{\textbf{\color{green}\meta{#1}}}
+\newcommand{\metared}[1]{\textbf{\color{red}\meta{#1}}}
+\newcommand{\metaorange}[1]{\textbf{\color{orange!80!red}\meta{#1}}}
+\newcommand{\metagray}[1]{\textbf{\color{gray}\meta{#1}}}
+\newcommand{\metabold}[1]{\textbf{\meta{#1}}}
+
+
+%**************************************%
+%               LENGTHS                %
+%______________________________________%
+
+\setlength{\parindent}{10pt}
+\newcommand{\optionskip}{\hskip-10pt}
+
+%**************************************%
+%                BOXES                 %
+%______________________________________%
+
+\newtcolorbox{exampleBox}[1][]
+{
+  %boxrule=0pt,
+  halign=flush center,
+  colback  = white!95!gray,
+  #1,
+}
+
+%**************************************%
+%          XPARSE COMMANDS             %
+%______________________________________%
+
+% Make a colorBox with the code above and the tikz-picture below.
+% Needs the use of xparse code to get the argument as verbatim for printing, 
+% and rescanning it for use in tikzpicture. 
+\ExplSyntaxOn
+% "v" means "verbatim argument"
+\NewDocumentCommand{\exampleNet}{v}
+{
+	% store the argument in variable
+  	% xparse has absorbed them "verbatim"
+  	\tl_set:Nn \l_argument_i_tl { #1 }
+  	\begin{exampleBox}
+		% print the first argument  
+  		\texttt{\l_argument_i_tl}
+  	\tcblower
+  		% transform back the first argument from verbatim into "standard tokens"
+  		\tl_set_rescan:NnV \l_argument_tl {} \l_argument_i_tl
+  		% process the contents of the rescanned arguments
+  		\begin{center}
+  			\begin{tikzpicture}
+  				\l_argument_tl
+  			\end{tikzpicture}
+  		\end{center}
+  	\end{exampleBox}
+}
+
+% allocate the variables
+\tl_new:N \l_argument_tl
+\tl_new:N \l_argument_i_tl
+% generate a variant command
+\cs_generate_variant:Nn \tl_set_rescan:Nnn { NnV }
+\ExplSyntaxOff
+
+% Close to above, but two arguments are given: one to print and one to execute inside a tikzpicture.
+% In case extra work needs to be done in tikzpicture
+\DeclareDocumentCommand\exampleNetCheat{v m}{\begin{exampleBox} \texttt{#1} \tcblower \begin{center}\begin{tikzpicture}[show nodes]  #2 \end{tikzpicture}\end{center}\end{exampleBox}}

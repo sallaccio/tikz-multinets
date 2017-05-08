@@ -1,0 +1,35 @@
+% Copyright 2017 by Sallaccio
+%
+% This file may be distributed and/or modified
+%
+% 1. under the LaTeX Project Public License and/or
+% 2. under the GNU Public License.
+%
+
+\documentclass{article}
+
+\usepackage{doc}
+\usepackage{enumerate}
+\usepackage{xcolor}
+\usepackage{xspace}
+\usepackage{tcolorbox}
+\tcbuselibrary{listings}
+\usepackage{xparse}
+
+\usepackage{../tikz-multinets}
+
+% \DisableCrossrefs
+\EnableCrossrefs
+\setlength\hfuzz{15pt} % dont make so many
+\hbadness=7000 % over and under full box warnings
+
+\MakeShortVerb{\/}
+
+\input{macros.tex}
+
+\begin{document}
+	\DocInput{tikz-multinets-doc.tex}
+\end{document}
+
+
+
