@@ -5,7 +5,7 @@ A LaTeX package to draw the most general interaction nets: with multiports and m
 
 ### An example is worth a thousand codelines
 
-[A large example](./examples/LargeExample.png)
+<img src="./examples/LargeExample.png" alt="An example" height="400">
 
 The brute code to this example [here](./examples/LargeExample.tex)
 For some explanation, see [below](#exampleCode).
@@ -66,9 +66,8 @@ The package does not contain automatic calculation of paths.
 Nevertheless it uses the power of Tikz ... (wire, short wire or very short wire...)
 
 ### An explanation of the code that produces the nice example above
-<a name="exampleCode"/>
 
-Its possible to pre-define some cells to be used as a shortcut later.
+<a name="exampleCode">It's</a> possible to pre-define some cells to be used as a shortcut later.
 Choose a latex command name, some tikz options, the number of ports:
 
 ```latex
