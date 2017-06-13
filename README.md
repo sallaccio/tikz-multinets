@@ -35,30 +35,30 @@ Each element of the net is defined separately as you would describe it orally: t
 
 To create a cell, give it:
 1. a _**name**_ in order to refer to it later
-1. a _**label**_: it is the sign shown on the cell
-   If the label is simple (no inline formula), you can skip the name: it will automatically be the same as the label
+1. a _**label**_: it is the sign shown on the cell.  
+If the label is simple (no inline formula), you can skip the name: it will automatically be the same as the label
 1. a _**number of principal ports**_ and of _**auxiliary ports**_
 1. a _**position**_ (see below).
 1. a _**direction**_: `U`, `D`, `R`, `L` for _Up_, _Down_, _Right_ and _Left_, or an angle in degrees with `0` for _Down_ and going clockwise
 
 Following tikz conventions, you can define position in many ways:
-- with cartesian coordinates: `{2,3}`
+
+- with cartesian coordinates:  `{2,3}`  
+- with cartesian coordinates:  `{2,3}`
 - with polar coordinates: `{50:2cm}`
 - relative to another element: `{a_cell}+{2,3}`
 - aligned with two existing elements  
  - horizontally to `a_cell`, vertically to `b_cell`: `{a_cell -| b_cell}`
- - vic-versa: `{a_cell |- b_cell}`
+ - vice-versa: `{a_cell |- b_cell}`
 - between two elements at a given proportion:
 `{$(a_cell)!.25!(b_cell)$}`
 - some combinations of these:
 `{$(a_cell)+(2,4)!.25!(b_cell)$}`
 
-This package adds another type of positioning:
-_**relative to a given port of a given cell**_.
+This package adds another type of positioning:  
+&nbsp;&nbsp;&nbsp;&nbsp;_**relative to a given port of a given cell**_. `{gamma.pax 3}++{1.7}`
 
-`{gamma.pax 1}++{1.7}`
-
-1.7 of whatever unit is used in the picture, above the first auxiliary port of cell `gamma`, where above means "in the direction in which the port points".
+1.7 of whatever unit is used in the picture, above the third auxiliary port of cell `gamma`, where above means "in the direction in which the port points".
 
 While cells are quite straightforward to define (not _easy_, _straightforward_),
 wires require a little more attention.
@@ -67,7 +67,7 @@ Nevertheless it uses the power of Tikz ... (wire, short wire or very short wire.
 
 ### An explanation of the code that produces the nice example above
 
-<a name="exampleCode">It's</a> possible to pre-define some cells to be used as a shortcut later.
+<span name="exampleCode">It's</span> possible to pre-define some cells to be used as a shortcut later.
 Choose a latex command name, some tikz options, the number of ports:
 
 ```latex

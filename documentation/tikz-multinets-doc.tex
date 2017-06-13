@@ -62,7 +62,7 @@ In that case, it will be shown in orange -- /{/\metaorange{position}/}/.
 This is mainly true of the position of a cell in the case it is the unique cell in the picture.
 Its value is then equivalent to /{0,0}/\footnote{To say the truth, 
 in such a case any position value would give the same result since images are cropped.}.
-But then, the command needs to have a \metablue{position} or end with a semicolon \lq{\color{red};}\rq.
+Note that if it is ommited, in order for the parser to understand the omission, the command needs to have an explicit [\metablue{direction}] or end with a semicolon \lq{\color{red};}\rq.
 
 Finally, the elements' naming mechanism -- normal parenthesis, /(/\metaorange{name}/)/ -- follows Tikz' rules and is mandatory except if \meta{label} is simple, 
 in which case the cell is implemented with the name \meta{label} 
@@ -148,6 +148,24 @@ or \texttt{arity=$k$} to create a cell with $k$ auxiliary ports.
 \metabold{options} can be a tikz-style, predefined style or any options for tikz lines.
 
 \metabold{port name} is the complete name of a port.
+
+\begin{exampleBox} 
+\begin{verbatim}
+\inetmulticell(rho){$\rho_n$}{5}{3};
+\inetport(rho.pal 1)
+\inetport(rho.pal 4)
+\inetport(rho.pax 2)
+\end{verbatim}		
+\tcblower
+\begin{center}
+\begin{tikzpicture}
+	\inetmulticell(rho){$\rho_n$}{5}{3};
+	\inetport(rho.pal 1)
+	\inetport(rho.pal 4)
+	\inetport(rho.pax 2)
+\end{tikzpicture}
+\end{center}
+\end{exampleBox}
 
 \DescribeMacro\inetwirefree
 \optionskip/[/\metablue{options}/](/\metared{port name}/)/
