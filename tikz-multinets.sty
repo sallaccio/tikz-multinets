@@ -19,6 +19,7 @@
 %		distance
 \RequirePackage{tikz}
 \RequirePackage{ifthen}
+\RequirePackage{pgffor}
 % \RequirePackage{xstring}
 
 % We need this to load the \emph{isosceles triangle} shape and \emph{trapezium} shape
@@ -34,6 +35,8 @@
 % \usepackage{pgfmath}
 
 \newif\ifshownodes
+\newif\ifshowports
+\newif\ifshowportsincell
 
 % Package option for linear logic
 \newif\iflinlogic
@@ -48,8 +51,11 @@
     coarity/.initial=2,
     precise/.is if=precisewires,
     show nodes/.is if=shownodes,
+    show ports/.is if=showports,
 %     direction/.initial=west,
 %     direction/.store in=\direct,
+	/cell/.cd,
+	show ports/.is if=showportsincell
 }
 
 %%%%%%%% CONSTANTS %%%%%%%%%
@@ -132,10 +138,10 @@
 \pgfdeclareshape{multicellule}{
     \savedmacro\arity{%        
         \pgfmathtruncatemacro\arity{\pgfkeysvalueof{/pgf/arity}}%
-    }
+    }%
     \savedmacro\coarity{%        
         \pgfmathtruncatemacro\coarity{\pgfkeysvalueof{/pgf/coarity}}%
-    }
+    }%
 
     \inheritsavedanchors[from=trapezium]
     \inheritanchorborder[from=trapezium]
@@ -1272,6 +1278,7 @@
 			\inetcell@iv[arity=#5,#1](#2){#3}{#6}[#7]
 		}
 	}{
+		\pgfkeys{/cell/.cd,#1}
 		\node[%
 			\inetcellstyle=\inetcolor,%
 			shape border rotate=\inet@angle+180,%
@@ -1284,6 +1291,24 @@
 			coarity=#4,
 			arity=#5,
 			#1] at (#6) (#2) {#3};%
+		\ifshowports%
+			\foreach \index in {1,...,#5} {%
+				\inetport(#2.pax \index);
+			}%
+			\foreach \index in {1,...,#4} {%
+				\inetport(#2.pal \index);
+			}%
+		\else%
+			\ifshowportsincell%
+				\foreach \index in {1,...,#5} {%
+					\inetport(#2.pax \index);
+				}%
+				\foreach \index in {1,...,#4} {%
+					\inetport(#2.pal \index);
+				}%
+			\fi%
+		\fi%
+		\showportsincellfalse%
 	}
 }
 
