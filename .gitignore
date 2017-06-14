@@ -2,4 +2,6 @@
 *.log
 *.synctex.gz
 
-*_nogit\.*
+*_nogit.*
+
+Multinets-doc\.tks

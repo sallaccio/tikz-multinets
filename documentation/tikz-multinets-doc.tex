@@ -3,7 +3,6 @@
 
 \author{Sallaccio}
 
-
 \maketitle 
 
 \begin{abstract}
@@ -16,8 +15,7 @@ We added the possibility of defining cells with multiple principal ports, cells 
 
 
 \section{Introduction}
-The package uses mainly Tikz to create graphical representations of the most general case of interaction nets, i.e. interaction nets with multiport cells and multiwires.
-Whereas the original package was aimed at the 
+The package uses Tikz to create graphical representations of the most general case of interaction nets, i.e. interaction nets with \emph{multiport cells} and \emph{multiwires}.
 
 The package is meant to be retro-compatible with \inetPackageLong which was aimed at representing interaction nets as intended by Laffont.
 All original commands are maintained and new commands were created in the same spirit,
@@ -26,7 +24,7 @@ thus the sporadic use of french names for some of the objects.
 
 \section{Main extensions from original package}
 
-Modifications from \inetPackageLong:
+Evolutions from \inetPackageLong:
 \begin{enumerate}[--]
 \item apex angle of simple cells (from 60 to 100)
 \item added multiport cells and 1-port cells
@@ -42,7 +40,6 @@ Modifications from \inetPackageLong:
 \subsection{Global rules}
 
 Some generic rules apply for all commands.
-
 
 Arguments between square brackets -- /[/\metablue{options}/]/ -- are optional and may or may not have a default value.
 They will be usually marked in blue.
@@ -71,7 +68,7 @@ in which case the cell is implemented with the name \meta{label}
 
 \subsection{Cells}
 
-\subsubsection{The cell itself}
+\subsubsection{Defining cells}
 
 \DescribeMacro\inetmulticell
 \optionskip/[/\metablue{options}/](/\metaorange{name}/){/\metared{label}/}{/\metared{coarity}/}{/\metared{arity}/}{/\metaorange{position}/}[/\metablue{direction}/]/
@@ -139,7 +136,47 @@ or \texttt{arity=$k$} to create a cell with $k$ auxiliary ports.
 \exampleNet{\inetzerocell(Z){Z}{0,0};}
 
 
-\subsubsection{Then its ports}
+\subsubsection{Then drawing its ports}
+
+Ports are not drawn by default, 
+because they usually should not be \emph{free} (disconnected) 
+but rather connected through a (multi)wire to another port, and are thus drawn when the wire is created.
+
+It is nevertheless possible to tell the package to draw all ports of all cells in the tikzpicture:
+
+\begin{exampleBox} 
+\begin{verbatim}
+\begin{tikzpicture}[show ports]
+	\inetmulticell(rho){$\rho_n$}{5}{3};
+	\inetmulticell(rho2){$\rho_n$}{5}{3}{4,0};
+\end{tikzpicture}
+\end{verbatim}		
+\tcblower
+\begin{center}
+\begin{tikzpicture}[show ports]
+	\inetmulticell(rho){$\rho_n$}{5}{3};
+	\inetmulticell(rho2){$\rho_n$}{5}{3}{4,0};
+\end{tikzpicture}
+\end{center}
+\end{exampleBox}
+
+or all ports of a given cell:
+
+\begin{exampleBox} 
+\begin{verbatim}
+\begin{tikzpicture}
+	\inetmulticell[show ports](rho){$\rho_n$}{5}{3};
+	\inetmulticell(rho2){$\rho_n$}{5}{3}{4,0};
+\end{tikzpicture}
+\end{verbatim}		
+\tcblower
+\begin{center}
+\begin{tikzpicture}
+	\inetmulticell[show ports](rho){$\rho_n$}{5}{3};
+	\inetmulticell(rho2){$\rho_n$}{5}{3}{4,0};
+\end{tikzpicture}
+\end{center}
+\end{exampleBox}
 
 
 \DescribeMacro\inetport
@@ -167,12 +204,23 @@ or \texttt{arity=$k$} to create a cell with $k$ auxiliary ports.
 \end{center}
 \end{exampleBox}
 
+\subsubsection{A special port}
+
+Ports can be free in the net and act as an interface of that net to the external world.
+Since they are not necessarily related to a cell, 
+a special command allows to create a free port at any given position.
+
 \DescribeMacro\inetwirefree
 \optionskip/[/\metablue{options}/](/\metared{port name}/)/
 
 \metabold{options} can be a tikz-style, predefined style or any options for tikz lines.
 
 \metabold{port name} is the complete name of a port.
+
+\subsubsection{Identifying the ports}
+
+The usual name of a port is its numbering as a principal or auxiliary port.
+Some ports have also other aliases: left, center, etc.
 
 \medskip
 \DescribeMacro\inetbrace
