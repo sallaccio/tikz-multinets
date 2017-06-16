@@ -93,9 +93,11 @@ in which case the cell is implemented with the name \meta{label}
 
 \medskip
 \noindent The length of a cell depends on the value of \meta{coarity}: it is defined as \meta{coarity}$\times$/\portsize/. 
+
 If \meta{coarity}=1, then the constructed multicell will be an /\inetcell/ (see below).
 If \meta{coarity}=1 and \meta{arity}=0, then the constructed multicell will be an /\inetzerocell/.
-A special writing is allowed for cases where positionning is not done by coordinates (e.g. in /matrix/ environments). In such a case the \meta{position} can be ommited (equivalent to /{0,0}/ or /{0:0}/) but then the command should finish with a `;' or a \meta{direction}.
+
+A special writing is allowed for cases where positioning is not done by coordinates (e.g. in /matrix/ environments). In such a case the \meta{position} can be omitted (equivalent to /{0,0}/ or /{0:0}/) but then the command should finish with a `;' or a \meta{direction}.
 
 \medskip
 \exampleNet{\inetmulticell(rho){$\rho_n$}{3}{3}[65]}
@@ -116,14 +118,31 @@ or \texttt{arity=$k$} to create a cell with $k$ auxiliary ports.
 
 \metabold{label} is the label of the cell. It appears inside.
 
-\metabold{position}  is a position in tikz-style cartesian or polar coordinates.
+\metabold{position}  is a position in tikz-style Cartesian or polar coordinates.
 
 \metabold{direction} is either /D/ (default)/,L,U,R/ or any angle where `0' is down.
 
 \medskip
-\exampleNet{\inetcell(A){A}{0,0}[U];}
-\bigskip
+\begin{exampleBox}[sidebyside, righthand width=3cm]
+\begin{verbatim}
+\inetcell(A){A}{0,0}[U];
+\end{verbatim}
+\tcblower
+\begin{center}
+\begin{tikzpicture}
+\inetcell(A){A}{0,0}[U];
+\end{tikzpicture}
+\end{center}
+\end{exampleBox}
+\medskip
 
+For retro-compatibility with De Falco's \inetPackage, the arity of a simple cell is defined as a tikz-option: \texttt{arity=4}.
+As said before, it is equivalent to define a simple cell of arity 4 or a multicell with coarity 1 and arity 4.
+
+A special kind of cell is a cell with only principal ports (originally only the particular case of a cell with 1 principal port and 0 auxiliary ones was considered).
+Such a cell is represented by a  circle.
+
+\bigskip
 \DescribeMacro\inetzerocell
 \optionskip/[/\metablue{options}/](/\metaorange{name}/){/\metared{label}/}{/\metaorange{position}/}/
 
@@ -133,11 +152,21 @@ or \texttt{arity=$k$} to create a cell with $k$ auxiliary ports.
 
 \metabold{label} is the label of the cell. It appears inside.
 
-\metabold{position}  is a position in tikz-style cartesian or polar coordinates.
+\metabold{position}  is a position in tikz-style Cartesian or polar coordinates.
 
 \medskip
-\exampleNet{\inetzerocell(Z){Z}{0,0};}
+\begin{exampleBox}[sidebyside, righthand width=3cm]
+\begin{verbatim}
+\inetzerocell(Z){Z}{0,0};
+\end{verbatim}
+\tcblower
+\begin{center}
+\begin{tikzpicture}
+\inetzerocell(Z){Z}{0,0};
+\end{tikzpicture}
+\end{center}
 
+\end{exampleBox}
 
 \subsubsection{Then drawing its ports}
 
@@ -145,7 +174,7 @@ Ports are not drawn by default,
 because they usually should not be \emph{free} (disconnected) 
 but rather connected through a (multi)wire to another port, and are thus drawn when the wire is created.
 
-It is nevertheless possible to tell the package to draw all ports of all cells in the tikzpicture:
+\DescribeMacro{[show ports]} It is nevertheless possible to tell the package to draw all ports of all cells in the tikzpicture:
 
 \begin{exampleBox} 
 \begin{verbatim}
@@ -181,7 +210,7 @@ or all ports of a given cell:
 \end{center}
 \end{exampleBox}
 
-
+\bigskip
 \DescribeMacro\inetport
 \optionskip/[/\metablue{options}/](/\metared{port name}/)/
 
@@ -189,7 +218,7 @@ or all ports of a given cell:
 
 \metabold{port name} is the complete name of a port.
 
-\begin{exampleBox} 
+\begin{exampleBox}[sidebyside, righthand width=3cm]
 \begin{verbatim}
 \inetmulticell(rho){$\rho_n$}{5}{3};
 \inetport(rho.pal 1)
@@ -220,10 +249,7 @@ a special command allows to create a free port at any given position.
 
 \metabold{port name} is the complete name of a port.
 
-\subsubsection{Identifying the ports}
-
-The usual name of a port is its numbering as a principal or auxiliary port.
-Some ports have also other aliases: left, center, etc.
+\subsubsection{Grouping ports under braces}
 
 \medskip
 \DescribeMacro\inetbrace
@@ -235,7 +261,7 @@ Some ports have also other aliases: left, center, etc.
 
 \metabold{description} is the text over the brace.
 
-\subsection{Defining usefull cells}
+\subsection{Defining useful cells}
 
 This is a macro that enables to predefine a cell with particular label, coarity, arity and possibly direction.
 
