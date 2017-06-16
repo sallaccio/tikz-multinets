@@ -89,7 +89,7 @@ in which case the cell is implemented with the name \meta{label}
 
 \medskip
 
-\exampleNet{\inetmulticell(rho){$\rho_n$}{5}{3};}
+\exampleNet{\inetmulticell(rho){$\rho_n$}{5}{3}{0,0}[D]}
 
 \medskip
 \noindent The length of a cell depends on the value of \meta{coarity}: it is defined as \meta{coarity}$\times$/\portsize/. 
@@ -98,11 +98,14 @@ If \meta{coarity}=1 and \meta{arity}=0, then the constructed multicell will be a
 A special writing is allowed for cases where positionning is not done by coordinates (e.g. in /matrix/ environments). In such a case the \meta{position} can be ommited (equivalent to /{0,0}/ or /{0:0}/) but then the command should finish with a `;' or a \meta{direction}.
 
 \medskip
-\exampleNet{\inetmulticell(rho){$\rho_n$}{3}{3}{0,0}[65];}
+\exampleNet{\inetmulticell(rho){$\rho_n$}{3}{3}[65]}
 \medskip
-\exampleNet{\inetmulticell(rho){$\rho_n$}{3}{3}{0,0}[R];}
+\exampleNet{\inetmulticell(rho){$\rho_n$}{3}{3}[R]}
+\medskip
+\exampleNet{\inetmulticell(rho){$\rho_n$}{3}{3};}
 \bigskip
  
+\bigskip
 \DescribeMacro\inetcell
 \optionskip/[/\metablue{options}/](/\metaorange{name}/){/\metared{label}/}{/\metaorange{position}/}[/\metablue{direction}/]/
 
