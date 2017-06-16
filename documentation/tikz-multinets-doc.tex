@@ -411,6 +411,38 @@ At the center of a \emph{multiwire}, there is a visible /\inetnode/:
 
 \medskip
 
+\subsubsection{Positioning relative to cells}
+
+\paragraph{Simili-ports of multicells and simple cells}
+
+\begin{itemize}
+	\item  leftext pax
+	\item  rightext pax
+	\item  leftext pal
+	\item  rightext pal
+\end{itemize}
+
+\DescribeMacro{rightext pax} A fake port after the last port of a cell. 
+\begin{exampleBox}[sidebyside, righthand width=3cm]
+\begin{verbatim}
+\inetcell{a};
+\inetport(a.rightext pax)
+\end{verbatim}		
+\tcblower
+\begin{center}
+\begin{tikzpicture}
+	\inetcell{a};
+	\inetport(a.rightext pax)
+\end{tikzpicture}
+\end{center}
+\end{exampleBox}
+
+\paragraph{External anchors}
+\begin{itemize}
+	\item  westwest
+	\item  easteast
+\end{itemize}
+
 
 \subsection{Boxes}
 
@@ -448,7 +480,25 @@ There are three main features of relative positionning.
 
 \section{Global values and defaults}
 
-/\portsize/
+\DescribeMacro{\inetsetportlength}
+	\verb|\renewcommand{\abovedistance}{#1}|
+	
+	\verb|\renewcommand{\aboveabovedistance}{(#1+.35cm)}|
+
+
+\DescribeMacro{\inetsetportsize} \verb|\inetportsize|
+
+\DescribeMacro{\inetsetcellheight} \verb|\inetcellheight|
+
+\DescribeMacro{\inetsetabovedistance} \verb|\abovedistance|
+
+\DescribeMacro{\inetsetaboveabovedistance} \verb|\aboveabovedistance|
+
+\DescribeMacro{\inetsetbypassdistance} \verb|\bypassdistance|
+
+\DescribeMacro{\inetsetwirefreelength} \verb|\inetwirefreelength|
+
+\DescribeMacro{\inetsetportnamedistance} \verb|\inetportnamedistance|
 
 \section{Here's the code}
 
@@ -475,18 +525,11 @@ There are three main features of relative positionning.
 
 \section{Creating wires}
 
+\section{Known issues}
 
-%    \begin{macrocode}
-	
-	\begin{plouf}
-	 Wasabi!
-	\end{plouf}
-	
-%    \end{macrocode}
-
-
-
-
+\paragraph{Simple cells of arity $1$}
+In the case of a simple cell with defined arity $1$, the port \verb|.pax 1| returns a \emph{divide by 0} error.
+It is well defined if the multicell has coarity at least $2$.
     
     
     
