@@ -41,27 +41,27 @@ Evolutions from \inetPackageLong:
 
 Some generic rules apply for all commands.
 
-Arguments between square brackets -- /[/\metablue{options}/]/ -- are optional and may or may not have a default value.
+Arguments between square brackets -- |[|\metablue{options}|]| -- are optional and may or may not have a default value.
 They will be usually marked in blue.
-For instance, \meta{direction} is always optional and has default value /D/, for \emph{down}.
+For instance, \meta{direction} is always optional and has default value |D|, for \emph{down}.
 This default value can be globally modified (see \ref{sec:packageSettings}).
 
 The optional arguments in square brackets right after the command name are usually \meta{tikz-options} 
 that change or overwrite graphical options for the given entity, cell or wire. 
 See the Tikz package for more details.
 
-Arguments between braces -- /{/\metared{options}/}/ -- are mandatory. 
+Arguments between braces -- |{|\metared{options}|}| -- are mandatory. 
 In general, the red colour will be used to emphasize the fact that a value is {\color{red}\textbf{mandatory}}.
 
 Sometimes, in some contexts, some arguments don't make much sense.
 Then, an otherwise mandatory option can be skipped and the default value is used. 
-In that case, it will be shown in orange -- /{/\metaorange{position}/}/.
+In that case, it will be shown in orange -- |{|\metaorange{position}|}|.
 This is mainly true of the position of a cell in the case it is the unique cell in the picture.
-Its value is then equivalent to /{0,0}/\footnote{To say the truth, 
+Its value is then equivalent to |{0,0}|\footnote{To say the truth, 
 in such a case any position value would give the same result since images are cropped.}.
 Note that if it is ommited, in order for the parser to understand the omission, the command needs to have an explicit [\metablue{direction}] or end with a semicolon \lq{\color{red};}\rq.
 
-Finally, the elements' naming mechanism -- normal parenthesis, /(/\metaorange{name}/)/ -- follows Tikz' rules and is mandatory except if \meta{label} is simple, 
+Finally, the elements' naming mechanism -- normal parenthesis, |(|\metaorange{name}|)| -- follows Tikz' rules and is mandatory except if \meta{label} is simple, 
 in which case the cell is implemented with the name \meta{label} 
 (again, see Tikz package for details).
 
@@ -71,7 +71,7 @@ in which case the cell is implemented with the name \meta{label}
 \subsubsection{Defining cells}
 
 \DescribeMacro\inetmulticell
-\optionskip/[/\metablue{options}/](/\metaorange{name}/){/\metared{label}/}{/\metared{coarity}/}{/\metared{arity}/}{/\metaorange{position}/}[/\metablue{direction}/]/
+\optionskip|[|\metablue{options}|](|\metaorange{name}|){|\metared{label}|}{|\metared{coarity}|}{|\metared{arity}|}{|\metaorange{position}|}[|\metablue{direction}|]|
 
 \metabold{options} can be a tikz-style, predefined style or any options for tikz lines.
 
@@ -85,19 +85,19 @@ in which case the cell is implemented with the name \meta{label}
 
 \metabold{position}  is a position in tikz-style cartesian or polar coordinates.
 
-\metabold{direction} is either /D/ (default)/,L,U,R/ or any angle where `0' is down.
+\metabold{direction} is either |D| (default)|,L,U,R| or any angle where `0' is down.
 
 \medskip
 
 \exampleNet{\inetmulticell(rho){$\rho_n$}{5}{3}{0,0}[D]}
 
 \medskip
-\noindent The length of a cell depends on the value of \meta{coarity}: it is defined as \meta{coarity}$\times$/\portsize/. 
+\noindent The length of a cell depends on the value of \meta{coarity}: it is defined as \meta{coarity}$\times$\verb|\portsize|. 
 
-If \meta{coarity}=1, then the constructed multicell will be an /\inetcell/ (see below).
-If \meta{coarity}=1 and \meta{arity}=0, then the constructed multicell will be an /\inetzerocell/.
+If \meta{coarity}=1, then the constructed multicell will be an \verb|\inetcell| (see below).
+If \meta{coarity}=1 and \meta{arity}=0, then the constructed multicell will be an |\inetzerocell|.
 
-A special writing is allowed for cases where positioning is not done by coordinates (e.g. in /matrix/ environments). In such a case the \meta{position} can be omitted (equivalent to /{0,0}/ or /{0:0}/) but then the command should finish with a `;' or a \meta{direction}.
+A special writing is allowed for cases where positioning is not done by coordinates (e.g. in |matrix| environments). In such a case the \meta{position} can be omitted (equivalent to |{0,0}| or |{0:0}|) but then the command should finish with a `;' or a \meta{direction}.
 
 \medskip
 \exampleNet{\inetmulticell(rho){$\rho_n$}{3}{3}[65]}
@@ -109,7 +109,7 @@ A special writing is allowed for cases where positioning is not done by coordina
  
 \bigskip
 \DescribeMacro\inetcell
-\optionskip/[/\metablue{options}/](/\metaorange{name}/){/\metared{label}/}{/\metaorange{position}/}[/\metablue{direction}/]/
+\optionskip|[|\metablue{options}|](|\metaorange{name}|){|\metared{label}|}{|\metaorange{position}|}[|\metablue{direction}|]|
 
 \metabold{options} can be a tikz-style, predefined style or any options for tikz lines, 
 or \texttt{arity=$k$} to create a cell with $k$ auxiliary ports.
@@ -120,7 +120,7 @@ or \texttt{arity=$k$} to create a cell with $k$ auxiliary ports.
 
 \metabold{position}  is a position in tikz-style Cartesian or polar coordinates.
 
-\metabold{direction} is either /D/ (default)/,L,U,R/ or any angle where `0' is down.
+\metabold{direction} is either |D| (default)|,L,U,R| or any angle where `0' is down.
 
 \medskip
 \begin{exampleBox}[sidebyside, righthand width=3cm]
@@ -144,7 +144,7 @@ Such a cell is represented by a  circle.
 
 \bigskip
 \DescribeMacro\inetzerocell
-\optionskip/[/\metablue{options}/](/\metaorange{name}/){/\metared{label}/}{/\metaorange{position}/}/
+\optionskip|[|\metablue{options}|](|\metaorange{name}|){|\metared{label}|}{|\metaorange{position}|}|
 
 \metabold{options} can be a tikz-style, predefined style or any options for tikz lines.
 
@@ -212,7 +212,7 @@ or all ports of a given cell:
 
 \bigskip
 \DescribeMacro\inetport
-\optionskip/[/\metablue{options}/](/\metared{port name}/)/
+\optionskip|[|\metablue{options}|](|\metared{port name}|)|
 
 \metabold{options} can be a tikz-style, predefined style or any options for tikz lines.
 
@@ -236,24 +236,225 @@ or all ports of a given cell:
 \end{center}
 \end{exampleBox}
 
-\subsubsection{A special port}
+\subsubsection{Identifying ports}
 
-Ports can be free in the net and act as an interface of that net to the external world.
-Since they are not necessarily related to a cell, 
-a special command allows to create a free port at any given position.
+Ports need to be identified not only to draw them,
+but also to connect wires to them.
+Such identification can be done in various ways.
+
+Following the naming of \inetPackage, the usual way of identifying a port of a multicell is by its type and numbering:
+third principal port or first auxiliary port for instance. 
+As shown in the example above, this is done by attaching to the \emph{name} of the cell a suffix \verb|.pal 3| for the third principal port or \verb|.pax 1| for the first auxiliary one.
+
+Some ports nevertheless have special names.
+
+\paragraph{Special names in multicells}
+Multicells have few specially named ports. 
+
+\DescribeMacro{pax} A survivor from \inetPackage. That port is in the middle even if the cell has even arity.
+\begin{exampleBox}[sidebyside, righthand width=3cm]
+\begin{verbatim}
+\inetmulticell{a}{5}{4};
+\inetport(a.pax)
+\end{verbatim}		
+\tcblower
+\begin{center}
+\begin{tikzpicture}
+	\inetmulticell{a}{3}{3};
+	\inetport(a.pax)
+\end{tikzpicture}
+\end{center}
+\end{exampleBox}
+
+\paragraph{Special names in simple cells}
+Laffont has shown that in interaction nets, all simple cells can be simulated by a small set of cells with arities $1$ or $2$.
+Such cells therefore have therefore been well treated, in particular for there special ports.
+
+\DescribeMacro{pal} The principal port is unique, so its easy to identify (\verb|pal 1| also works).
+\begin{exampleBox}[sidebyside, righthand width=3cm]
+\begin{verbatim}
+\inetcell{a};
+\inetport(a.pal)
+\end{verbatim}		
+\tcblower
+\begin{center}
+\begin{tikzpicture}
+	\inetcell{a};
+	\inetport(a.pal)
+\end{tikzpicture}
+\end{center}
+\end{exampleBox}
+
+\DescribeMacro{pax}
+\DescribeMacro{middle pax} An auxiliary port in the middle, for the case of arity $1$.
+In the case of odd arity $2k+1$, it's the same as \verb|pax k+1|. 
+In the case of even arity, it does not correspond to any numbered port: it's just a port in the middle.
+\begin{exampleBox}[sidebyside, righthand width=3cm]
+\begin{verbatim}
+\inetcell{a};
+\inetport(a.pax) 
+
+% \inetport(a.middle pax)
+\end{verbatim}		
+\tcblower
+\begin{center}
+\begin{tikzpicture}
+	\inetcell{a};
+	\inetport(a.pax)
+\end{tikzpicture}
+\end{center}
+\end{exampleBox}
+
+\DescribeMacro{left pax} The first auxiliary port (remember that ports are numbered counter-clockwise).
+\begin{exampleBox}[sidebyside, righthand width=3cm]
+\begin{verbatim}
+\inetcell{a};
+\inetport(a.left pax)
+\end{verbatim}		
+\tcblower
+\begin{center}
+\begin{tikzpicture}
+	\inetcell{a};
+	\inetport(a.left pax)
+\end{tikzpicture}
+\end{center}
+\end{exampleBox}
+
+\DescribeMacro{right pax} The last auxiliary port. 
+\begin{exampleBox}[sidebyside, righthand width=3cm]
+\begin{verbatim}
+\inetcell{a};
+\inetport(a.right pax)
+\end{verbatim}		
+\tcblower
+\begin{center}
+\begin{tikzpicture}
+	\inetcell{a};
+	\inetport(a.right pax)
+\end{tikzpicture}
+\end{center}
+\end{exampleBox}
+
+\bigskip
+The default simple cell has arity 4. Therefore, the default cell can be used for any arity $<4$ as follows:
+\begin{itemize}
+	\item arity = 1  $\rightarrow$	\verb/pax/  or \verb/middle pax/
+	\item arity = 2  $\rightarrow$	\verb/left|right pax/
+	\item arity = 3  $\rightarrow$ 	\verb/left|middle|right pax/
+	\item arity = 4  $\rightarrow$	\verb/pax 1|2|3|4/ and \verb/|left|right/
+\end{itemize}
+
+\subsubsection{The case of zerocells}
+
+Zerocells were introduced to represent a cell with a unique (principal) port.
+To be clear, it was decided to represent them as circles as they do not have deiferentiated sets of ports. 
+Pgf\slash tikz has an anchor mechanism in which circles have a natural set of positions around them that can be referred to using cardinal directions.
+We extended these anchors to define ports in the 8 positions of the 8-point compass:
+\texttt{north, south, west, east, north west, north east, south west, south east}.
+
+We also provided some aliases for these points: the version without spaces and the initials.
+As a result, the possibilities are:
+
+\begin{itemize}
+	\item \texttt{north, n}
+	\item \texttt{south, s}
+	\item \texttt{west, w}
+	\item \texttt{east, e}
+	\item \texttt{north west, northwest, nw}
+	\item \texttt{north east, northeast, ne}
+	\item \texttt{south west, southwest, sw}
+	\item \texttt{south east, southeast, se}
+\end{itemize}
+
+
+\begin{exampleBox}[sidebyside, righthand width=3cm]
+\begin{verbatim}
+\inetzerocell(A){A};
+\inetport(A.south east);
+\end{verbatim}
+\tcblower
+\begin{center}
+\begin{tikzpicture}
+	\inetzerocell(A){A}{0,0};
+	\inetport(A.south east);
+\end{tikzpicture}
+\end{center}
+\end{exampleBox}
+
+Note that because of the use of anchors to define the position of the port, it is possible to have zerocells with up to $8$ ports if necessary:
+
+\begin{exampleBox}[sidebyside, righthand width=3cm]
+\begin{verbatim}
+\inetzerocell(A){A}{0,0};
+\inetport(A.n);
+\inetport(A.ne);
+\inetport(A.e);
+\inetport(A.se);
+\inetport(A.s);
+\inetport(A.sw);
+\inetport(A.w);
+\inetport(A.nw);
+\end{verbatim}
+\tcblower
+\begin{center}
+\begin{tikzpicture}
+	\inetzerocell(A){A}{0,0};
+	\inetport(A.n);
+	\inetport(A.ne);
+	\inetport(A.e);
+	\inetport(A.se);
+	\inetport(A.s);
+	\inetport(A.sw);
+	\inetport(A.w);
+	\inetport(A.nw);
+\end{tikzpicture}
+\end{center}
+\end{exampleBox}
+
+\subsubsection{Free ports}
+
+Ports can be \emph{free} in the net and act as an interface of that net to the external world.
+In such a case, it can be useful to draw them a little longer in order to emphasize this fact.
 
 \DescribeMacro\inetwirefree
-\optionskip/[/\metablue{options}/](/\metared{port name}/)/
+\optionskip|[|\metablue{options}|](|\metared{port name}|)|
 
 \metabold{options} can be a tikz-style, predefined style or any options for tikz lines.
 
 \metabold{port name} is the complete name of a port.
 
+\begin{exampleBox}[sidebyside, righthand width=2.5cm]
+\begin{verbatim}
+\inetmulticell[show ports]{A}{2}{3}{0,0}
+\inetwirefree(A.pal 1)
+	
+\inetzerocell{B}{0,-1.5};
+\inetwirefree(B.south east)
+\inetport(B.s)
+\end{verbatim}
+\tcblower
+\begin{center}
+\begin{tikzpicture}[show nodes]
+	\inetmulticell[show ports]{A}{2}{3}{0,0}
+	\inetwirefree(A.pal 1)
+	
+	\inetzerocell{B}{0,-1.5};
+	\inetwirefree(B.south east)
+	\inetport(B.s)
+\end{tikzpicture}
+\end{center}
+\end{exampleBox}
+
+The length of such free ports can be set globally (see \autoref{sec:defaults}).
+
 \subsubsection{Grouping ports under braces}
+
+One can wish to annotate ports to comment on their value or use.
+The package provides a useful \emph{curly brace} possibility to group nodes:
 
 \medskip
 \DescribeMacro\inetbrace
-\optionskip/(/\metared{first port}/)(/\metared{last port}/){/\metared{description}/}/
+\optionskip|(|\metared{first port}|)(|\metared{last port}|){|\metared{description}|}|
 
 \metabold{first port} is the complete name of a port.
 
@@ -261,12 +462,63 @@ a special command allows to create a free port at any given position.
 
 \metabold{description} is the text over the brace.
 
+\begin{exampleBox}[sidebyside, righthand width=2.7cm]
+\begin{verbatim}
+\inetmulticell[show ports]{A}{5}{3};
+\inetbrace(A.pal 1)(A.pal 4){First group}
+\inetbrace(A.pax 1)(A.pax 3){Other group}
+\end{verbatim}
+\tcblower
+\begin{center}
+\begin{tikzpicture}[show nodes]
+	\inetmulticell[show ports]{A}{5}{3};
+	\inetbrace(A.pal 1)(A.pal 4){First group}
+	\inetbrace(A.pax 1)(A.pax 3){Other group}
+\end{tikzpicture}
+\end{center}
+\end{exampleBox}
+
+Be careful not to invert the order of the start and end ports:
+
+\begin{exampleBox}[sidebyside, righthand width=2.7cm, colback  = white!80!orange,]
+\begin{verbatim}
+\inetmulticell[show ports]{A}{5}{3};
+\inetbrace(A.pal 4)(A.pal 1){First group}
+\end{verbatim}
+\tcblower
+\begin{center}
+\begin{tikzpicture}[show nodes]
+	\inetmulticell[show ports]{A}{5}{3};
+	\inetbrace(A.pal 4)(A.pal 1){First group}
+\end{tikzpicture}
+\end{center}
+\end{exampleBox}
+
+This command can be hacked to annotate a group of cells instead, with rather random results.
+As a rule of thumb, it works of cells are well aligned.
+
+\begin{exampleBox}
+\begin{verbatim}
+\inetmulticell[show ports]{A}{5}{3};
+	\inetmulticell[show ports]{B}{2}{3}{2.5,0};
+\inetbrace(A.pal 1)(B.pal 2){Cool cells}
+\end{verbatim}
+\tcblower
+\begin{center}
+\begin{tikzpicture}[show nodes]
+	\inetmulticell[show ports]{A}{5}{3};
+	\inetmulticell[show ports]{B}{2}{3}{2.5,0};
+	\inetbrace(A.pal 1)(B.pal 2){Cool cells}
+\end{tikzpicture}
+\end{center}
+\end{exampleBox}
+
 \subsection{Defining useful cells}
 
 This is a macro that enables to predefine a cell with particular label, coarity, arity and possibly direction.
 
 \DescribeMacro\inetmulticelltype
-\optionskip/[/\metablue{options}/]{/\metared{label}/}{/\metared{coarity}/}{/\metared{arity}/}/
+\optionskip|[|\metablue{options}|]{|\metared{label}|}{|\metared{coarity}|}{|\metared{arity}|}|
 
 \metabold{options} can be a tikz-style, predefined style or any options for tikz lines.
 
@@ -276,18 +528,18 @@ This is a macro that enables to predefine a cell with particular label, coarity,
 
 \metabold{arity} is the number of \emph{auxiliary ports} of the cell.
 
-\metabold{direction} is either /D/ (default)/,L,U,R/ or any angle where `0' is down.
+\metabold{direction} is either |D| (default)|,L,U,R| or any angle where `0' is down.
 
-\noindent It is used inside a /\newcommand/ as follows:
+\noindent It is used inside a |\newcommand| as follows:
 
 \medskip
-/\newcommand{\/\metared{specialcommand}/}{\inetmulticelltype/\ldots/}/
+|\newcommand{\|\metared{specialcommand}|}{\inetmulticelltype|\ldots|}|
 \medskip
 
 \noindent It is then possible to define such a predefined cell by just giving its name and its position:
 
 \medskip
-/\/\metabold{specialcommand}/[/\metablue{new options}/](/\metared{name}/){/\metared{position}/}/
+|\|\metabold{specialcommand}|[|\metablue{new options}|](|\metared{name}|){|\metared{position}|}|
 \medskip
 
 Notice that \meta{new options} add up with options from the definition of the special command, and overwrite them in case of conflict.
@@ -305,7 +557,7 @@ The simplest wire is between two ports:
 \medskip
 
 \DescribeMacro\inetwire
-\optionskip /[/\metablue{options}/](/\metared{port name}/)*</\metablue{cross node}/>(/\metared{port name}/)/
+\optionskip |[|\metablue{options}|](|\metared{port name}|)*<|\metablue{cross node}|>(|\metared{port name}|)|
 
 \metabold{options} can be a tikz-style, predefined style or any options for tikz lines.
 
@@ -318,7 +570,7 @@ Or between any two nodes:
 \medskip
 
 \DescribeMacro\inetwirecoords
-\optionskip /[/\metablue{options}/](/\metared{node name}/)(/\metared{node name}/)/
+\optionskip |[|\metablue{options}|](|\metared{node name}|)(|\metared{node name}|)|
 
 \metabold{options} can be a tikz-style, predefined style or any options for tikz lines.
 
@@ -329,7 +581,7 @@ For some uses, when cells are really close, it might come in handy to use more f
 \medskip
 
 \DescribeMacro\inetshortwire
-\optionskip /[/\metablue{options}/](/\metared{port name}/)(/\metared{port name}/)/
+\optionskip |[|\metablue{options}|](|\metared{port name}|)(|\metared{port name}|)|
 
 \metabold{options} can be a tikz-style, predefined style or any options for tikz lines.
 
@@ -338,7 +590,7 @@ For some uses, when cells are really close, it might come in handy to use more f
 \medskip
 
 \DescribeMacro\inetveryshortwire
-\optionskip /[/\metablue{options}/](/\metared{port name}/)(/\metared{port name}/)/
+\optionskip |[|\metablue{options}|](|\metared{port name}|)(|\metared{port name}|)|
 
 \metabold{options} can be a tikz-style, predefined style or any options for tikz lines.
 
@@ -349,13 +601,13 @@ Now the serious \emph{connectors}:
 \medskip
 
 \DescribeMacro\inetmultiwire
-\optionskip/[/\metablue{options}/](/\metablue{name}/){/\metared{position}/}/
+\optionskip|[|\metablue{options}|](|\metablue{name}|){|\metared{position}|}|
 
-\hskip25pt/</\metablue{cross node}/>(/\metared{port 1}/)/
+\hskip25pt|<|\metablue{cross node}|>(|\metared{port 1}|)|
 
-\hskip25pt/.../
+\hskip25pt|...|
 
-\hskip25pt/</\metablue{cross node}/>(/\metared{port n}/)[/\mbox{\metablue{free port angle}}/]/
+\hskip25pt|<|\metablue{cross node}|>(|\metared{port n}|)[|\mbox{\metablue{free port angle}}|]|
 
 \metabold{options} can be a tikz-style, predefined style or any options for tikz lines.
 
@@ -370,13 +622,13 @@ Now the serious \emph{connectors}:
 \metabold{free port angle} give the angle for the freeport if provided.
 
 \medskip
-At the center of a \emph{multiwire}, there is a visible /\inetnode/:
+At the center of a \emph{multiwire}, there is a visible |\inetnode|:
 \medskip
 
 \DescribeMacro\inetnode
-\optionskip/[/\metablue{option}/](/\metared{name}/){/\metared{position}/}/
+\optionskip|[|\metablue{option}|](|\metared{name}|){|\metared{position}|}|
 
-\metabold{option} can be `/wire/' or any options for tikz circle nodes.
+\metabold{option} can be `|wire|' or any options for tikz circle nodes.
 
 \metabold{name} is a name for the wire. 
 
@@ -384,7 +636,7 @@ At the center of a \emph{multiwire}, there is a visible /\inetnode/:
 
 \medskip
 \DescribeMacro\inetloop
-\optionskip/[/\metablue{options}/]{/\metared{position}/}/
+\optionskip|[|\metablue{options}|]{|\metared{position}|}|
 
 \metabold{options} can be a tikz-style, predefined style or any options for tikz lines.
 
@@ -392,7 +644,7 @@ At the center of a \emph{multiwire}, there is a visible /\inetnode/:
 
 \medskip
 \DescribeMacro\inetwirearoundleft
-\optionskip/[/\metablue{options}/](/\metared{pal}/)(/\metared{pax}/)/
+\optionskip|[|\metablue{options}|](|\metared{pal}|)(|\metared{pax}|)|
 
 \metabold{options} can be a tikz-style, predefined style or any options for tikz lines.
 
@@ -401,7 +653,7 @@ At the center of a \emph{multiwire}, there is a visible /\inetnode/:
 \metabold{pax} is the complete name of an auxiliary port of a (usually the same) cell.
 
 \DescribeMacro\inetwirearoundright
-\optionskip/[/\metablue{options}/](/\metared{pal}/)(/\metared{pax}/)/
+\optionskip|[|\metablue{options}|](|\metared{pal}|)(|\metared{pax}|)|
 
 \metabold{options} can be a tikz-style, predefined style or any options for tikz lines.
 
@@ -450,22 +702,22 @@ First a box around some nodes, then the promotion box of linear logic.
 \medskip
 
 \DescribeMacro\inetbox
-\optionskip/[/\metablue{options}/]{/\metared{fit}/}(/\metared{name}/)/
+\optionskip|[|\metablue{options}|]{|\metared{fit}|}(|\metared{name}|)|
 
 \metabold{options} can be a tikz-style, predefined style or any options for tikz lines.
 
-\metabold{fit} is a space-separated list of cell names /(a) (b) .../.
+\metabold{fit} is a space-separated list of cell names |(a) (b) ...|.
 
 \metabold{name} is a name for further reference of the box. 
 
 \DescribeMacro\inetprombox
-\optionskip/[/\metablue{options}/]{/\metared{fit}/}(/\metared{name}/)/
+\optionskip|[|\metablue{options}|]{|\metared{fit}|}(|\metared{name}|)|
 
 \metabold{options} can be a tikz-style, predefined style or any options for tikz lines.
 
-\metabold{fit} is a space-separated list of cell names /(a) (b) .../.
+\metabold{fit} is a space-separated list of cell names |(a) (b) ...|.
 
-\metabold{name} is a name for the $!$-cell. The name of the box is /b/\meta{name}. 
+\metabold{name} is a name for the $!$-cell. The name of the box is |b|\meta{name}. 
 
 \subsection{Relative positionning}
 
@@ -479,6 +731,7 @@ There are three main features of relative positionning.
 
 
 \section{Global values and defaults}
+\label{sec:defaults}
 
 \DescribeMacro{\inetsetportlength}
 	\verb|\renewcommand{\abovedistance}{#1}|
@@ -499,6 +752,11 @@ There are three main features of relative positionning.
 \DescribeMacro{\inetsetwirefreelength} \verb|\inetwirefreelength|
 
 \DescribeMacro{\inetsetportnamedistance} \verb|\inetportnamedistance|
+
+\DescribeMacro{\inetsetbracedistance} \verb|\inetbracedistance|
+
+\DescribeMacro{\inetsetbracetextdistance} \verb|\inetbracetextdistance|
+
 
 \section{Here's the code}
 
@@ -529,8 +787,11 @@ There are three main features of relative positionning.
 
 \paragraph{Simple cells of arity $1$}
 In the case of a simple cell with defined arity $1$, the port \verb|.pax 1| returns a \emph{divide by 0} error.
-It is well defined if the multicell has coarity at least $2$.
-    
+It is well defined if the multicell has coarity at least $2$. 
+This problem can arise in the case of automation of tikz-multinet creation. 
+Otherwise:
+
+\textbf{Temporary solution: } just use \verb|.pax| instead. 
     
     
 %    \begin{macrocode}

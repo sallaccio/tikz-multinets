@@ -15,6 +15,14 @@
 \usepackage{tcolorbox}
 \tcbuselibrary{listings}
 \usepackage{xparse}
+\usepackage[hidelinks]{hyperref}
+
+\hypersetup{
+    colorlinks,
+    linkcolor={red!60!black},
+    citecolor={blue!60!black},
+    urlcolor={blue!80!black}
+}
 
 \usepackage{../tikz-multinets}
 
@@ -23,7 +31,8 @@
 \setlength\hfuzz{15pt} % dont make so many
 \hbadness=7000 % over and under full box warnings
 
-\MakeShortVerb{\/}
+%\MakeShortVerb{\/}
+\MakeShortVerb{|}
 
 \input{macros.tex}
 
