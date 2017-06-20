@@ -66,6 +66,8 @@
 \newcommand{\bypassdistance}{.3cm}       	% sets the distance of the exterior principal and auxiliary ports
 \newcommand{\inetwirefreelength}{.3cm}   	% sets the length of free wires
 \newcommand{\inetportnamedistance}{6pt}	 	% sets the distance of the name of a port from its representation
+\newcommand{\inetbracedistance}{\abovedistance+.2cm}			% sets the distance of the braces from the ports it embraces
+\newcommand{\inetbracetextdistance}{\inetbracedistance+.4cm} 	% sets the distance of the text over the braces from the ports it embraces
 
 \newcommand{\inetsetportlength}[1]{
 	\renewcommand{\abovedistance}{#1}
@@ -78,6 +80,8 @@
 \newcommand{\inetsetbypassdistance}[1]{\renewcommand{\bypassdistance}{#1}}
 \newcommand{\inetsetwirefreelength}[1]{\renewcommand{\inetwirefreelength}{#1}}
 \newcommand{\inetsetportnamedistance}[1]{\renewcommand{\inetportnamedistance}{#1}}
+\newcommand{\inetsetbracedistance}[1]{\renewcommand{\inetbracedistance}{#1}}
+\newcommand{\inetsetbracetextdistance}[1]{\renewcommand{\inetbracetextdistance}{#1}}
 
 \def\signfornodes{\Large +}					% sets the respresentation of hidden nodes if 'show nodes' option is on
 
@@ -1104,7 +1108,7 @@
 %	Normal styles
 \tikzset{portstyle/.style = {draw, line width=0.3ex, line cap=rect}}
 \tikzset{wirestyle/.style = {draw, line width=0.15ex, line cap=rect}}
-\tikzset{freewirestyle/.style = {draw, line width=0.15ex, line cap=rect}}
+\tikzset{freewirestyle/.style = {draw, line width=0.3ex, line cap=rect}}
 \tikzset{cellstyle/.style = {
     draw, line width=0.2ex, fill=white,
     inner sep=0.2ex,
@@ -1731,7 +1735,7 @@
 
 \def\inetwirefree@i[#1](#2.#3){
 	\begin{pgfonlayer}{\inetwirelayer}%
-        \draw[\inetwirestyle=\inetcolor,#1]%
+        \draw[\inetwirestyle=\inetcolor,freewirestyle,#1]%
         (#2.#3) -- ($(#2.#3)!\inetwirefreelength!(#2.above #3)$);%
     \end{pgfonlayer}%
 }
@@ -1910,14 +1914,14 @@
 	\inetbrace@i
 }
 \def\inetbrace@i(#1.#2)(#3.#4)#5{
-	\draw [decorate,decoration={brace,amplitude=4,raise=1ex},line width=.2ex]%
+	\draw [decorate,decoration={brace,amplitude=4,raise=\inetbracedistance},line width=.2ex]%
 			(#3.#4) -- coordinate[midway](M1) (#1.#2);
 % 			
 	\pgfpointanchor{M1}{center}
 	\pgfgetlastxy{\Mx}{\My}
 	\pgfpointanchor{#1}{#2}
 	\pgfgetlastxy{\leftx}{\lefty}
-	\node at ($(M1.center)!1.5em!(\Mx+\My-\lefty,\My+\leftx-\Mx)$) {#5};
+	\node at ($(M1.center)!\inetbracetextdistance!(\Mx+\My-\lefty,\My+\leftx-\Mx)$) {#5};
 }
 
 \def\inetbraceabove(#1.#2)(#3.#4)#5[#6]{
