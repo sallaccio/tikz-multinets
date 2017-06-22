@@ -44,7 +44,7 @@ Some generic rules apply for all commands.
 Arguments between square brackets -- |[|\metablue{options}|]| -- are optional and may or may not have a default value.
 They will be usually marked in blue.
 For instance, \meta{direction} is always optional and has default value |D|, for \emph{down}.
-This default value can be globally modified (see \ref{sec:packageSettings}).
+This default value can be globally modified (see \autoref{sec:defaults}).
 
 The optional arguments in square brackets right after the command name are usually \meta{tikz-options} 
 that change or overwrite graphical options for the given entity, cell or wire. 
@@ -139,6 +139,22 @@ or \texttt{arity=$k$} to create a cell with $k$ auxiliary ports.
 For retro-compatibility with De Falco's \inetPackage, the arity of a simple cell is defined as a tikz-option: \texttt{arity=4}.
 As said before, it is equivalent to define a simple cell of arity 4 or a multicell with coarity 1 and arity 4.
 
+In general, a multicell with coarity $1$ and arity $k$ will be replaced by a simple cell with arity $k$.
+
+\begin{exampleBox}[sidebyside, righthand width=3cm]
+\begin{verbatim}
+\inetcell[arity=5]{A}{0,0};
+\inetmulticell(B){B}{1}{5}{0,-1.5};
+\end{verbatim}
+\tcblower
+\begin{center}
+\begin{tikzpicture}[show ports]
+	\inetcell[arity=5]{A}{0,0};
+	\inetmulticell(B){B}{1}{5}{0,-1.5};
+\end{tikzpicture}
+\end{center}
+\end{exampleBox}
+
 A special kind of cell is a cell with only principal ports (originally only the particular case of a cell with 1 principal port and 0 auxiliary ones was considered).
 Such a cell is represented by a  circle.
 
@@ -179,15 +195,15 @@ but rather connected through a (multi)wire to another port, and are thus drawn w
 \begin{exampleBox} 
 \begin{verbatim}
 \begin{tikzpicture}[show ports]
-	\inetmulticell(rho){$\rho_n$}{5}{3};
-	\inetmulticell(rho2){$\rho_n$}{5}{3}{4,0};
+	\inetmulticell(alpha){$\alpha$}{5}{3};
+	\inetmulticell(beta){$\beta$}{3}{4}{3,0};
 \end{tikzpicture}
 \end{verbatim}		
 \tcblower
 \begin{center}
 \begin{tikzpicture}[show ports]
-	\inetmulticell(rho){$\rho_n$}{5}{3};
-	\inetmulticell(rho2){$\rho_n$}{5}{3}{4,0};
+	\inetmulticell(alpha){$\alpha$}{5}{3};
+	\inetmulticell(beta){$\beta$}{3}{4}{3,0};
 \end{tikzpicture}
 \end{center}
 \end{exampleBox}
@@ -197,18 +213,51 @@ or all ports of a given cell:
 \begin{exampleBox} 
 \begin{verbatim}
 \begin{tikzpicture}
-	\inetmulticell[show ports](rho){$\rho_n$}{5}{3};
-	\inetmulticell(rho2){$\rho_n$}{5}{3}{4,0};
+	\inetmulticell[show ports](rho){$\rho$}{5}{3};
+	\inetmulticell(rho2){$\rho$}{5}{3}{4,0};
 \end{tikzpicture}
 \end{verbatim}		
 \tcblower
 \begin{center}
 \begin{tikzpicture}
-	\inetmulticell[show ports](rho){$\rho_n$}{5}{3};
-	\inetmulticell(rho2){$\rho_n$}{5}{3}{4,0};
+	\inetmulticell[show ports](rho){$\rho$}{5}{3};
+	\inetmulticell(rho2){$\rho$}{5}{3}{4,0};
 \end{tikzpicture}
 \end{center}
 \end{exampleBox}
+
+Nevertheless, the \lq\lq normal\rq\rq\ way of doing is to draw only ports that are not connected to any wire.
+The default name of a port is of the form 
+$$ \meta{cell name}.\meta{type of port}\hskip1em\meta{number}$$
+with a space before the number and 
+where \meta{type of port} is
+\begin{itemize}
+	\item \verb|pal| for \emph{principal} ports
+	\item \verb|pax| for \emph{auxiliary} ports
+\end{itemize}
+Ports are numbered in couter-clockwise order, separately for the two kinds:
+
+\begin{exampleBox} 
+\begin{center}
+\begin{tikzpicture}
+	\inetmulticell(rho){$\rho$}{5}{3};
+	
+	\node at ($(rho.above rightext pal)!-\inetportnamedistance!(rho.rightext pal)+(-2,0)$) {principal ports:};%
+	\inetportnamed(rho.pal 1){1}[color=blue]
+	\inetportnamed(rho.pal 2){2}[color=blue]
+	\inetportnamed(rho.pal 3){3}[color=blue]
+	\inetportnamed(rho.pal 4){4}[color=blue]
+	\inetportnamed(rho.pal 5){5}[color=blue]
+	
+	\node at ($(rho.above rightext pax)!-\inetportnamedistance!(rho.rightext pax)+(-2,0)$) {auxiliary ports:};%
+	\inetportnamed(rho.pax 1){1}[color=blue]
+	\inetportnamed(rho.pax 2){2}[color=blue]
+	\inetportnamed(rho.pax 3){3}[color=blue]
+\end{tikzpicture}
+\end{center}
+\end{exampleBox}
+
+To draw a given port, use the following command
 
 \bigskip
 \DescribeMacro\inetport
@@ -220,7 +269,7 @@ or all ports of a given cell:
 
 \begin{exampleBox}[sidebyside, righthand width=3cm]
 \begin{verbatim}
-\inetmulticell(rho){$\rho_n$}{5}{3};
+\inetmulticell(rho){$\rho$}{5}{3};
 \inetport(rho.pal 1)
 \inetport(rho.pal 4)
 \inetport(rho.pax 2)
@@ -228,10 +277,43 @@ or all ports of a given cell:
 \tcblower
 \begin{center}
 \begin{tikzpicture}
-	\inetmulticell(rho){$\rho_n$}{5}{3};
+	\inetmulticell(rho){$\rho$}{5}{3};
 	\inetport(rho.pal 1)
 	\inetport(rho.pal 4)
 	\inetport(rho.pax 2)
+\end{tikzpicture}
+\end{center}
+\end{exampleBox}
+
+It is often the case that one needs to give and show a name of a port.
+
+\DescribeMacro\inetportnamed
+\optionskip|[|\metablue{options}|](|\metared{port name}|){|\metared{port label}|}[|\metablue{label options}|]|
+
+\metabold{options} can be a tikz-style, predefined style or any options for tikz lines.
+
+\metabold{port name} is the identification name of a port.
+
+\metabold{port label} is the name you wish to show for this port.
+
+\metabold{label options} are tikz-options for the label.
+
+The label is in its own tikz-node, so all options that apply to nodes are acceptable in the \meta{label options}.
+
+\begin{exampleBox}
+\begin{verbatim}
+\inetmulticell(rho){$\rho$}{5}{3}[R];
+\inetportnamed(rho.pal 1){$a$}
+\inetportnamed(rho.pal 4){$b$}[color=red]
+\inetportnamed(rho.pax 2){You name it!}[rotate=90]
+\end{verbatim}		
+\tcblower
+\begin{center}
+\begin{tikzpicture}
+	\inetmulticell(rho){$\rho$}{5}{3}[R];
+	\inetportnamed(rho.pal 1){$a$}
+	\inetportnamed(rho.pal 4){$b$}[color=red]
+	\inetportnamed(rho.pax 2){You name it!}[rotate=90]
 \end{tikzpicture}
 \end{center}
 \end{exampleBox}
@@ -244,14 +326,14 @@ Such identification can be done in various ways.
 
 Following the naming of \inetPackage, the usual way of identifying a port of a multicell is by its type and numbering:
 third principal port or first auxiliary port for instance. 
-As shown in the example above, this is done by attaching to the \emph{name} of the cell a suffix \verb|.pal 3| for the third principal port or \verb|.pax 1| for the first auxiliary one.
+As shown in the examples above, this is done by attaching to the \emph{name} of the cell a suffix \verb|.pal 3| for the third principal port or \verb|.pax 1| for the first auxiliary one.
 
 Some ports nevertheless have special names.
 
 \paragraph{Special names in multicells}
 Multicells have few specially named ports. 
 
-\DescribeMacro{pax} A survivor from \inetPackage. That port is in the middle even if the cell has even arity.
+\DescribeMacro{pax} A survivor from \inetPackage: that port is in the middle even if the cell has even arity.
 \begin{exampleBox}[sidebyside, righthand width=3cm]
 \begin{verbatim}
 \inetmulticell{a}{5}{4};
@@ -446,6 +528,9 @@ In such a case, it can be useful to draw them a little longer in order to emphas
 \end{exampleBox}
 
 The length of such free ports can be set globally (see \autoref{sec:defaults}).
+
+We will see later that such free ports can also be attached to other objects, like wires and invisible nodes.
+The definition stays the same since these objects also define a set of ports.
 
 \subsubsection{Grouping ports under braces}
 
