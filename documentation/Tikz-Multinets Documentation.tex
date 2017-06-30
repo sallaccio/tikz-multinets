@@ -24,7 +24,10 @@
     urlcolor={blue!80!black}
 }
 
-\usepackage{../tikz-multinets}
+\makeatletter
+\def\input@path{{../}}
+\makeatother
+\usepackage{tikz-multinets}
 
 % \DisableCrossrefs
 \EnableCrossrefs
@@ -35,6 +38,8 @@
 \MakeShortVerb{|}
 
 \input{macros.tex}
+
+\makeindex
 
 \begin{document}
 	\DocInput{tikz-multinets-doc.tex}

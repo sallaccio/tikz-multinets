@@ -11,8 +11,7 @@ His package was meant to represent simple interaction nets, i.e. with one princi
 We added the possibility of defining cells with multiple principal ports, cells with only one port at all as well as many different ways of defining new paths for wires.
 \end{abstract}
 
-
-
+\tableofcontents
 
 \section{Introduction}
 The package uses Tikz to create graphical representations of the most general case of interaction nets, i.e. interaction nets with \emph{multiport cells} and \emph{multiwires}.
@@ -29,7 +28,7 @@ Evolutions from \inetPackageLong:
 \item apex angle of simple cells (from 60 to 100)
 \item added multiport cells and 1-port cells
 \item added multiwires
-\item added empty node with anchors above and above above for better building of wires
+\item added invisible node with port-like anchors for better building of wires
 \item added external auxiliary and principal ports to bypass cells
 \item added commands for : cellheight, size of principal port in multicells, port size, free wire size, bypass distance
 \end{enumerate}
@@ -48,7 +47,8 @@ This default value can be globally modified (see \autoref{sec:defaults}).
 
 The optional arguments in square brackets right after the command name are usually \meta{tikz-options} 
 that change or overwrite graphical options for the given entity, cell or wire. 
-See the Tikz package for more details.
+See the Tikz package for more details. 
+Some package specific options to the given object are also available through pgf/tikz key options.
 
 Arguments between braces -- |{|\metared{options}|}| -- are mandatory. 
 In general, the red colour will be used to emphasize the fact that a value is {\color{red}\textbf{mandatory}}.
@@ -61,9 +61,96 @@ Its value is then equivalent to |{0,0}|\footnote{To say the truth,
 in such a case any position value would give the same result since images are cropped.}.
 Note that if it is ommited, in order for the parser to understand the omission, the command needs to have an explicit [\metablue{direction}] or end with a semicolon \lq{\color{red};}\rq.
 
-Finally, the elements' naming mechanism -- normal parenthesis, |(|\metaorange{name}|)| -- follows Tikz' rules and is mandatory except if \meta{label} is simple, 
+Finally, the elements' naming mechanism -- normal parenthesis, |(|\metaorange{name}|)| -- 
+follows Tikz' rules and is mandatory except if \meta{label} is simple, 
 in which case the cell is implemented with the name \meta{label} 
 (again, see Tikz package for details).
+
+\subsection{Positioning}
+An important aspect of building nets is the positioning of cells and wires.
+The usual way of positioning objects in tikz is by corrdinates -- cartesian or polar -- but many other ways are available 
+(using tikzlibraries \texttt{positioning} and \texttt{calc} included in \thisPackage.
+
+There are options to do calculations on positions: take some known position and add a vector, again cartesian of polar:
+
+\begin{exampleBox}
+\begin{verbatim}
+\node[draw] (a) at (0,0) {a};
+\node[draw] (b) at ($(a)+(2,0.5)$) {b};
+\end{verbatim}
+\tcblower
+\begin{center}
+\begin{tikzpicture}
+	\node[draw] (a) at (0,0) {a};
+	\node[draw] (b) at ($(a)+(2,0.5)$) {b};
+\end{tikzpicture}
+\end{center}
+\end{exampleBox}
+
+Or you can calculate a position in between two given positions at a proportion of the path:
+
+\begin{exampleBox}
+\begin{verbatim}
+\node[draw] (a) at (0,0) {a};
+\node[draw] (b) at (4,0) {b};
+\node[draw] (c) at ($(a)!.3!(b)$) {c};
+\end{verbatim}
+\tcblower
+\begin{center}
+\begin{tikzpicture}
+	\node[draw] (a) at (0,0) {a};
+	\node[draw] (b) at (4,0) {b};
+	\node[draw] (c) at ($(a)!.3!(b)$) {c};
+\end{tikzpicture}
+\end{center}
+\end{exampleBox}
+
+Those are composable
+
+\begin{exampleBox}
+\begin{verbatim}
+\node[draw] (a) at (0,0) {a};
+\node[draw] (b) at (4,2) {b};
+\node[draw, color=red] (c) at ($(a)!.5!(b)+(1,0)$]) {c};
+\end{verbatim}
+\tcblower
+\begin{center}
+\begin{tikzpicture}
+	\draw[help lines,step=1cm,gray!20] (-1,-1) grid (5,3);
+	\node[draw] (a) at (0,0) {a};
+	\node[draw] (b) at (4,2) {b};
+	\node[draw, color=red] (c) at ($(a)!.5!(b)+(1,0)$]) {c};
+\end{tikzpicture}
+\end{center}
+\end{exampleBox}
+
+Another most interesting way is to use two elements and at the crossing of their positions: at the vertical of one of them and one the same line as the other. 
+
+\begin{exampleBox}
+\begin{verbatim}
+\node[draw] (a) at (0,0) {a};
+\node[draw] (b) at (4,2) {b};
+\node[draw, color=red] (c) at (a -| b) {c};
+\node[draw, color=green] (d) at (a |- b) {d};
+\end{verbatim}
+\tcblower
+\begin{center}
+\begin{tikzpicture}
+	\draw[help lines,step=1cm,gray!20] (-1,-1) grid (5,3);
+	\node[draw] (a) at (0,0) {a};
+	\node[draw] (b) at (4,2) {b};
+	\node[draw, color=red] (c) at (a -| b) {c};
+	\node[draw, color=green] (d) at (a |- b) {d};
+\end{tikzpicture}
+\end{center}
+\end{exampleBox}
+
+Cells can be positioned using these techniques. 
+Better, there positions can then be used for calculations: at the crossing of multicell $A$ and multicell $B$.
+Actually, for more precision, even ports of cells can be used as positions.
+
+This package adds even more position capabilities connected to the specifics of cells.
+More on that in \autoref{sec:relativePositioning}.
 
 
 \subsection{Cells}
@@ -136,10 +223,9 @@ or \texttt{arity=$k$} to create a cell with $k$ auxiliary ports.
 \end{exampleBox}
 \medskip
 
-For retro-compatibility with De Falco's \inetPackage, the arity of a simple cell is defined as a tikz-option: \texttt{arity=4}.
-As said before, it is equivalent to define a simple cell of arity 4 or a multicell with coarity 1 and arity 4.
-
-In general, a multicell with coarity $1$ and arity $k$ will be replaced by a simple cell with arity $k$.
+For retro-compatibility with De Falco's \inetPackage, the arity of a simple cell is defined as a tikz-option: defaults to \texttt{arity=4}.
+It is equivalent to define a simple cell of arity $k$ or a multicell with coarity 1 and arity $k$.
+The package actually replaces the former by the latter.
 
 \begin{exampleBox}[sidebyside, righthand width=3cm]
 \begin{verbatim}
@@ -170,7 +256,6 @@ Such a cell is represented by a  circle.
 
 \metabold{position}  is a position in tikz-style Cartesian or polar coordinates.
 
-\medskip
 \begin{exampleBox}[sidebyside, righthand width=3cm]
 \begin{verbatim}
 \inetzerocell(Z){Z}{0,0};
@@ -181,8 +266,22 @@ Such a cell is represented by a  circle.
 \inetzerocell(Z){Z}{0,0};
 \end{tikzpicture}
 \end{center}
-
 \end{exampleBox}
+
+\noindent\begin{minipage}{.7\textwidth}
+Of course, the \verb|zerocell| is a convention. 
+A cell with only one pricipal port could just be as well a triangle with no ports in the back.
+\end{minipage}\hspace{.9cm}
+\begin{minipage}[c]{.2\textwidth}
+\begin{exampleBox}
+\begin{center}
+\begin{tikzpicture}
+\inetcell(Z){Z}{0,0};
+\inetport(Z.pal)
+\end{tikzpicture}
+\end{center}
+\end{exampleBox}
+\end{minipage}
 
 \subsubsection{Then drawing its ports}
 
@@ -226,7 +325,7 @@ or all ports of a given cell:
 \end{center}
 \end{exampleBox}
 
-Nevertheless, the \lq\lq normal\rq\rq\ way of doing is to draw only ports that are not connected to any wire.
+Nevertheless, the \lq\lq normal\rq\rq\ way of doing is to draw only ports that are not connected to any wire, since wires in some way contain the ports they connect.
 The default name of a port is of the form 
 $$ \meta{cell name}.\meta{type of port}\hskip1em\meta{number}$$
 with a space before the number and 
@@ -333,7 +432,7 @@ Some ports nevertheless have special names.
 \paragraph{Special names in multicells}
 Multicells have few specially named ports. 
 
-\DescribeMacro{pax} A survivor from \inetPackage: that port is in the middle even if the cell has even arity.
+\DescribeMacro{pax} A survivor from the \inetPackage package: that port is in the middle even if the cell has even arity.
 \begin{exampleBox}[sidebyside, righthand width=3cm]
 \begin{verbatim}
 \inetmulticell{a}{5}{4};
@@ -598,6 +697,7 @@ As a rule of thumb, it works of cells are well aligned.
 \end{center}
 \end{exampleBox}
 
+
 \subsection{Defining useful cells}
 
 This is a macro that enables to predefine a cell with particular label, coarity, arity and possibly direction.
@@ -748,7 +848,7 @@ At the center of a \emph{multiwire}, there is a visible |\inetnode|:
 
 \medskip
 
-\subsubsection{Positioning relative to cells}
+\subsubsection{Fake ports of cells to better draw wires}
 
 \paragraph{Simili-ports of multicells and simple cells}
 
@@ -804,7 +904,8 @@ First a box around some nodes, then the promotion box of linear logic.
 
 \metabold{name} is a name for the $!$-cell. The name of the box is |b|\meta{name}. 
 
-\subsection{Relative positionning}
+\section{Relative positionning}
+\label{sec:relativePositioning}
 
 There are three main features of relative positionning.
 
@@ -842,31 +943,49 @@ There are three main features of relative positionning.
 
 \DescribeMacro{\inetsetbracetextdistance} \verb|\inetbracetextdistance|
 
+\section{Miscellaneous}
 
-\section{Here's the code}
+\subsection{Unspecific number of ports}
 
-\begin{macro}{slurp}
+Use three dots to show repetitive ports, behaviors or connections:
 
-	\mbox{} blabla 
-	
-	dadf
-	sdf
-	sdf
-%    \begin{macrocode}
-      \begin{tikzpicture}
-       bla
-       
-       blabla
-      \end{tikzpicture}
+\DescribeMacro\inetdotsbetween
+\optionskip|[|\metablue{direction}|](|\metared{position}|)(|\metared{position}|)|
 
-%    \end{macrocode}
+\metabold{direction} can be |h| or |v|.
 
-\end{macro}
+\metabold{position} is any positioning tikz can understand, including cells, ports or any anchor defined by them, calculations on positions.
 
 
-
-
-\section{Creating wires}
+\begin{exampleBox}[sidebyside, righthand width=2.7cm]
+\begin{verbatim}
+\inetmulticell{A}{5}{3};
+\inetport(A.pax 1)
+\inetport(A.pax 2)
+\inetport(A.pax 3)
+\inetport(A.pal 1)
+\inetport(A.pal 3)
+\inetport(A.pal 4)
+\inetport(A.pal 5)
+\inetdotsbetween(A.above pal 1)(A.above pal 3)
+\inetbrace(A.pal 1)(A.pal 3){First group}
+\end{verbatim}
+\tcblower
+\begin{center}
+\begin{tikzpicture}[show nodes]
+	\inetmulticell{A}{5}{3};
+	\inetport(A.pax 1)
+	\inetport(A.pax 2)
+	\inetport(A.pax 3)
+	\inetport(A.pal 1)
+	\inetport(A.pal 3)
+	\inetport(A.pal 4)
+	\inetport(A.pal 5)
+	\inetdotsbetween(A.above pal 1)(A.above pal 3)
+	\inetbrace(A.pal 1)(A.pal 3){First group}
+\end{tikzpicture}
+\end{center}
+\end{exampleBox}
 
 \section{Known issues}
 
