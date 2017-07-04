@@ -956,8 +956,7 @@ Use three dots to show repetitive ports, behaviors or connections:
 
 \metabold{position} is any positioning tikz can understand, including cells, ports or any anchor defined by them, calculations on positions.
 
-
-\begin{exampleBox}[sidebyside, righthand width=2.7cm]
+\begin{exampleBox}
 \begin{verbatim}
 \inetmulticell{A}{5}{3};
 \inetport(A.pax 1)
@@ -983,6 +982,34 @@ Use three dots to show repetitive ports, behaviors or connections:
 	\inetport(A.pal 5)
 	\inetdotsbetween(A.above pal 1)(A.above pal 3)
 	\inetbrace(A.pal 1)(A.pal 3){First group}
+\end{tikzpicture}
+\end{center}
+\end{exampleBox}
+
+The three dots can be used between any two positions and can thus be used to signify an unsepcified number of cells for instance.
+
+\begin{exampleBox}[sidebyside, righthand width=2.7cm]
+\begin{verbatim}
+\inetzerocell(A1){$A_1$}{0,0};
+\inetport(A1.s);
+\inetzerocell(An){$A_n$}{2,0};
+\inetport(An.s);
+
+\inetdotsbetween(A1)(An)
+\inetdotsbetween(A1.s)(An.s)
+\inetdotsbetween[v](A1.n)({3,1})
+\end{verbatim}
+\tcblower
+\begin{center}
+\begin{tikzpicture}[show nodes]
+	\inetzerocell(A1){$A_1$}{0,0};
+	\inetport(A1.s);
+	\inetzerocell(An){$A_n$}{2,0};
+	\inetport(An.s);
+	
+	\inetdotsbetween(A1)(An)
+	\inetdotsbetween(A1.s)(An.s)
+	\inetdotsbetween[v](A1.n)({3,1})
 \end{tikzpicture}
 \end{center}
 \end{exampleBox}
