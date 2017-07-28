@@ -5,9 +5,11 @@ A LaTeX package to draw the most general interaction nets: with multiports and m
 
 ### An example is worth a thousand codelines
 
-<img src="./examples/LargeExample.png" alt="An example" height="400">
+<p align="center">
+	<img src="./examples/LargeExample.png" alt="An example" height="400">  
+</p>
 
-The brute code to this example [here](./examples/LargeExample.tex)
+The brute code to this example [here](./examples/LargeExample.tex).  
 For some explanation, see [below](#exampleCode).
 
 ### Lafont interaction nets.
