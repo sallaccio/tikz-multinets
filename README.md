@@ -43,7 +43,38 @@ If the label is simple (no inline formula), you can skip the name: it will autom
 1. a _**position**_ (see below).
 1. a _**direction**_: `U`, `D`, `R`, `L` for _Up_, _Down_, _Right_ and _Left_, or an angle in degrees with `0` for _Down_ and going clockwise
 
-Following tikz conventions, you can define position in many ways:
+```latex
+\inetmulticell(alpha){$\alpha$}{3}{7}{0,0}[U]
+```
+
+You can then reference its ports using the name of the cell and the type and number of the port:
+
+```latex
+alpha.pal 2    % second principal port
+alpha.pax 7    % seventh auxiliary port
+```
+
+If you want to draw the port for instance, you shall write:
+
+```latex
+\inetport(alpha.pal 2)
+```
+
+If you want to draw a wire connecting two ports, it's as simple as:
+
+```latex
+\inetwire(alpha.pal 1)(beta.pax 3)
+```
+
+If there are more than three ports, specify:
+
+```latex
+\inetmultiwire(alpha.pal 1)(beta.pax 3)(gamma.pal 2)(alpha.pax 2)
+```
+
+That's about it for the cells and wires. 
+Now starts the difficult part: positioning the cells to make the net comprehensible.
+Following tikz conventions, you can define positions in many ways:
 
 - with cartesian coordinates:  `{2,3}`  
 - with cartesian coordinates:  `{2,3}`
@@ -62,8 +93,8 @@ This package adds another type of positioning:
 
 1.7 of whatever unit is used in the picture, above the third auxiliary port of cell `gamma`, where above means "in the direction in which the port points".
 
-While cells are quite straightforward to define (not _easy_, _straightforward_),
-wires require a little more attention.
+While cells are quite straightforward to define (not _easy_, _straightforward_) once you've found where to place them,
+wires require a little more attention if you want them to avoid getting under the cells.
 The package does not contain automatic calculation of paths.
 Nevertheless it uses the power of Tikz ... (wire, short wire or very short wire...)
 
